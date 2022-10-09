@@ -6,11 +6,11 @@
 -- To change this template use File | Settings | File Templates.
 --
 
-dofile("app0:/wrapper/loveSound.lua")
-dofile("app0:/wrapper/loveImage.lua")
-dofile("app0:/wrapper/loveImageData.lua")
-dofile("app0:/wrapper/loveEnvironment.lua")
-dofile("app0:/wrapper/loveFont.lua")
+dofile("ux0:/data/lpp-vita/samples/nottetris2/wrapper/loveSound.lua")
+dofile("ux0:/data/lpp-vita/samples/nottetris2/wrapper/loveImage.lua")
+dofile("ux0:/data/lpp-vita/samples/nottetris2/wrapper/loveImageData.lua")
+dofile("ux0:/data/lpp-vita/samples/nottetris2/wrapper/loveEnvironment.lua")
+dofile("ux0:/data/lpp-vita/samples/nottetris2/wrapper/loveFont.lua")
 
 love = {
     graphics = {},
@@ -38,12 +38,12 @@ function love.graphics.getModes()
 end
 
 function love.filesystem.exists(filePath)
-    return System.doesFileExist("app0:/" .. filePath)
+    return System.doesFileExist("ux0:/data/lpp-vita/samples/nottetris2/" .. filePath)
 end
 
 -- TODO: Figure out how big the read/ write length needs to be
 function love.filesystem.read(filePath)
-    local handle = System.openFile("app0:/" .. filePath, FREAD)
+    local handle = System.openFile("ux0:/data/lpp-vita/samples/nottetris2/" .. filePath, FREAD)
     local sizeOfFile = 200
     return System.readFile(handle, sizeOfFile)
 end
@@ -59,9 +59,9 @@ end
 function love.graphics.setMode( width, height, fullscreen, vsync, fsaa)
     if(fullscreen) then
     else
-        Graphics.initBlend()
-        Graphics.debugPrint(5, 5, "Only Fullscreen Mode possible", Color.new(255, 255, 255))
-        Graphics.termBlend()
+        --Graphics.initBlend()
+        --Graphics.debugPrint(5, 5, "Only Fullscreen Mode possible", Color.new(255, 255, 255))
+        --Graphics.termBlend()
     end
 end
 
@@ -78,11 +78,12 @@ function love.graphics.getHeight()
 end
 
 function love.audio.newSource(filePath, type)
-    return LoveSound:create({id = Sound.open("app0:/" .. filePath), volume = 0, isLooping = false})
+    local soundId = Sound.open("ux0:/data/lpp-vita/samples/nottetris2/" .. filePath)
+    return LoveSound:create({id = soundId, volume = 0, isLooping = false})
 end
 
 function love.graphics.newImageFromFile(filePath)
-    return LoveImage:create({id = Graphics.loadImage("app0:/" .. filePath), filterWidth = "", filterHeight = ""})
+    return LoveImage:create({id = Graphics.loadImage("ux0:/data/lpp-vita/samples/nottetris2/" .. filePath), filterWidth = "", filterHeight = ""})
 end
 
 function love.graphics.newImageFromImageData(imageData)
@@ -93,8 +94,12 @@ function love.graphics.setBackgroundColor(r,g,b)
     love.env:setBackgroundColor(Color.new(r,g,b, 255))
 end
 
+function love.graphics.newImageFont(image, glyphs)
+    return LoveFont:create({ id = Font.load("ux0:/data/lpp-vita/samples/nottetris2/" .. fontPath)})
+end
+
 function love.image.newImageDataFromPath(filePath)
-    local graphicsId = Graphics.loadImage("app0:/" .. filePath)
+    local graphicsId = Graphics.loadImage("ux0:/data/lpp-vita/samples/nottetris2/" .. filePath)
     local graphics_width = Graphics.getImageWidth(graphicsId)
     local graphics_height = Graphics.getImageHeight(graphicsId)
 
@@ -102,20 +107,13 @@ function love.image.newImageDataFromPath(filePath)
 end
 
 function love.image.newImageDataFromDimensions(image_width, image_height)
-    love.graphics.print(
-         image_width .. "wi\n" .. image_height .. "ht\n" .. 
-         Color.getR(love.env.backgroundColor) .. "," .. Color.getG(love.env.backgroundColor) .. ","..
-         Color.getB(love.env.backgroundColor),
-         20,60,0,1,1)
          idsa = Graphics.createImage(image_width, image_height, Color.new(0,0,0))
-         love.graphics.print("tze id", 20,60,0,1,1)
          obj = LoveImageData:create({id = idsa, width = image_width, height = image_height})
-         love.graphics.print("obj", 20,60,0,1,1)
          return obj
 end
 
 function love.graphics.newFont(fontPath)
-    return LoveFont:create({ id = Font.load("app0:/" .. fontPath)})
+    return LoveFont:create({ id = Font.load("ux0:/data/lpp-vita/samples/nottetris2/" .. fontPath)})
 end
 
 function love.graphics.setFont(font)
@@ -149,11 +147,14 @@ function love.graphics.translate(dx, dy)
 end
 
 function love.graphics.draw(drawable, x, y, angle, scale_x, scale_y, offset_x, offset_y)
+    local x_position = x + love.coordinateSystemTranslation.x + offset_x
+    local y_position = y + love.coordinateSystemTranslation.y + offset_y
+
     Graphics.initBlend()
-    Graphics.drawScaleImage(
-        x + love.coordinateSystemTranslation.x + offset_x or 0,
-        y + love.coordinateSystemTranslation.y + offset_y or 0,
-        drawable.id, scale_x or 1, scale_y or 1)
+    Graphics.drawImage(
+        x_position,
+        y_position,
+        drawable.id)
     Graphics.termBlend()
 end
 
@@ -166,7 +167,12 @@ end
 
 function love.graphics.print( text, x, y, r, scale_x, scale_y)
     Graphics.initBlend()
-    Screen.clear()
+    Font.print(love.env.activeFont.id, x, y, text, Color.new(0, 255, 255))
+    Graphics.termBlend()
+end
+
+function love.graphics.debugPrint( text, x, y, r, scale_x, scale_y)
+    Graphics.initBlend()
     Font.print(love.env.activeFont.id, x, y, text, Color.new(0, 255, 255))
     Graphics.termBlend()
     Screen.flip()

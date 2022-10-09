@@ -1,16 +1,35 @@
-main = {
-   love = {}
+mainObject = {
+   love = {},
+   boot = {},
+   blockfall = {},
+   blockturn = {},
+   blockmove = {},
+   lineclear = {},
+   fourlineclear = {},
+   gameover1 = {},
+   gameover2 = {},
+   pausesound = {},
+   highscorebeep = {},
+   newlevel = {},
+
+   stabyourselflogo = {},
+   logo = {},
+   title = {},
+   gametype = {},
+   mpmenu = {},
+   optionsmenu = {},
+   volumeslider = {}
 }
 
-function main.load()
+function mainFuction.load()
    --requires--
-   dofile("app0:/controls.lua")
-   --dofile("app0:/gameB.lua")
-   --dofile("app0:/gameBmulti.lua")
-   --dofile("app0:/gameA.lua")
-   dofile("app0:/menu.lua")
-   dofile("app0:/failed.lua")
-   dofile("app0:/rocket.lua")
+   dofile("ux0:/data/lpp-vita/samples/nottetris2/controls.lua")
+   dofile("ux0:/data/lpp-vita/samples/nottetris2/gameB.lua")
+   dofile("ux0:/data/lpp-vita/samples/nottetris2/gameBmulti.lua")
+   dofile("ux0:/data/lpp-vita/samples/nottetris2/gameA.lua")
+   dofile("ux0:/data/lpp-vita/samples/nottetris2/menu.lua")
+   dofile("ux0:/data/lpp-vita/samples/nottetris2/failed.lua")
+   dofile("ux0:/data/lpp-vita/samples/nottetris2/rocket.lua")
    
    vsync = true
    
@@ -56,11 +75,11 @@ function main.load()
    
    ----SOUND--
    music = {}
-
-   music[1] = love.audio.newSource( "sounds/themeA.ogg", "stream")
+   
+   music[1] = love.audio.newSource( "sounds/themeA.ogg")
    music[1]:setVolume( 0.6 )
    music[1]:setLooping( true )
-
+   
    music[2] = love.audio.newSource( "sounds/themeB.ogg", "stream")
    music[2]:setVolume( 0.6 )
    music[2]:setLooping( true )
@@ -97,18 +116,18 @@ function main.load()
    musicoptions:setVolume( 1 )
    musicoptions:setLooping( true )
 
-   boot = love.audio.newSource( "sounds/boot.ogg")
-   blockfall = love.audio.newSource( "sounds/blockfall.ogg", "stream")
-   blockturn = love.audio.newSource( "sounds/turn.ogg", "stream")
-   blockmove = love.audio.newSource( "sounds/move.ogg", "stream")
-   lineclear = love.audio.newSource( "sounds/lineclear.ogg", "stream")
-   fourlineclear = love.audio.newSource( "sounds/4lineclear.ogg", "stream")
-   gameover1 = love.audio.newSource( "sounds/gameover1.ogg", "stream")
-   gameover2 = love.audio.newSource( "sounds/gameover2.ogg", "stream")
-   pausesound = love.audio.newSource( "sounds/pause.ogg", "stream")
-   highscorebeep = love.audio.newSource( "sounds/highscorebeep.ogg", "stream")
-   newlevel = love.audio.newSource( "sounds/newlevel.ogg", "stream")
-   newlevel:setVolume( 0.6 )
+   mainObject.boot = love.audio.newSource( "sounds/boot.ogg")
+   mainObject.blockfall = love.audio.newSource( "sounds/blockfall.ogg", "stream")
+   mainObject.blockturn = love.audio.newSource( "sounds/turn.ogg", "stream")
+   mainObject.blockmove = love.audio.newSource( "sounds/move.ogg", "stream")
+   mainObject.lineclear = love.audio.newSource( "sounds/lineclear.ogg", "stream")
+   mainObject.fourlineclear = love.audio.newSource( "sounds/4lineclear.ogg", "stream")
+   mainObject.gameover1 = love.audio.newSource( "sounds/gameover1.ogg", "stream")
+   mainObject.gameover2 = love.audio.newSource( "sounds/gameover2.ogg", "stream")
+   mainObject.pausesound = love.audio.newSource( "sounds/pause.ogg", "stream")
+   mainObject.highscorebeep = love.audio.newSource( "sounds/highscorebeep.ogg", "stream")
+   mainObject.newlevel = love.audio.newSource( "sounds/newlevel.ogg", "stream")
+   mainObject.newlevel:setVolume( 0.6 )
 
    changevolume(volume)
 
@@ -199,9 +218,9 @@ function main.load()
    loadimages()
    --
    ----all done!
-   --if startdelay == 0 then
-   --   menu_load()
-   --end
+   if startdelay == 0 then
+      menu_load()
+   end
 end
 
 function start()
@@ -211,27 +230,27 @@ end
 function loadimages()
    --IMAGES--
    --menu--
-   stabyourselflogo = newPaddedImage("graphics/stabyourselflogo.png")
-   logo = newPaddedImage("graphics/logo.png")
-   title = newPaddedImage("graphics/title.png")
-   gametype = newPaddedImage("graphics/gametype.png")
-   mpmenu = newPaddedImage("graphics/mpmenu.png")
-   optionsmenu = newPaddedImage("graphics/options.png")
-   volumeslider = newPaddedImage("graphics/volumeslider.png")
+   mainObject.stabyourselflogo = newPaddedImage("graphics/stabyourselflogo.png")
+   mainObject.logo = newPaddedImage("graphics/logo.png")
+   mainObject.title = newPaddedImage("graphics/title.jpg")
+   mainObject.gametype = newPaddedImage("graphics/gametype.png")
+   mainObject.mpmenu = newPaddedImage("graphics/mpmenu.png")
+   mainObject.optionsmenu = newPaddedImage("graphics/options.png")
+   mainObject.volumeslider = newPaddedImage("graphics/volumeslider.png")
    ----game--
-   gamebackground = newPaddedImage("graphics/gamebackground.png")
-   gamebackgroundcutoff = newPaddedImage("graphics/gamebackgroundgamea.png")
-   gamebackgroundmulti = newPaddedImage("graphics/gamebackgroundmulti.png")
-   multiresults = newPaddedImage("graphics/multiresults.png")
+   mainObject.gamebackground = newPaddedImage("graphics/gamebackground.png")
+   mainObject.gamebackgroundcutoff = newPaddedImage("graphics/gamebackgroundgamea.png")
+   mainObject.gamebackgroundmulti = newPaddedImage("graphics/gamebackgroundmulti.png")
+   mainObject.multiresults = newPaddedImage("graphics/multiresults.png")
 
-   number1 = newPaddedImage("graphics/versus/number1.png")
-   number2 = newPaddedImage("graphics/versus/number2.png")
-   number3 = newPaddedImage("graphics/versus/number3.png")
+   mainObject.number1 = newPaddedImage("graphics/versus/number1.png")
+   mainObject.number2 = newPaddedImage("graphics/versus/number2.png")
+   mainObject.number3 = newPaddedImage("graphics/versus/number3.png")
 
-   gameover = newPaddedImage("graphics/gameover.png")
-   gameovercutoff = newPaddedImage("graphics/gameovercutoff.png")
-   pausegraphic = newPaddedImage("graphics/pause.png")
-   pausegraphiccutoff = newPaddedImage("graphics/pausecutoff.png")
+   mainObject.gameover = newPaddedImage("graphics/gameover.png")
+   mainObject.gameovercutoff = newPaddedImage("graphics/gameovercutoff.png")
+   mainObject.pausegraphic = newPaddedImage("graphics/pause.png")
+   mainObject.pausegraphiccutoff = newPaddedImage("graphics/pausecutoff.png")
 
    ----figures--
    marioidle = newPaddedImage("graphics/versus/marioidle.png")
@@ -270,13 +289,14 @@ function loadimages()
    ----nextpiece
    nextpieceimg = {}
    for i = 1, 7 do
-      nextpieceimg[i] = newPaddedImage( "graphics/pieces/"..i..".png", scale )
+      --nextpieceimg[i] = newPaddedImage( "graphics/pieces/"..i..".png", scale )
+      nextpieceimg[i] = newPaddedImage( "graphics/pieces/"..i..".png" )
    end
 
    ----font--
    ---- original
-   ----tetrisfont = newPaddedImageFont("graphics/font.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<! ")
-   ----whitefont = newPaddedImageFont("graphics/fontwhite.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<!+ ")
+   --tetrisfont = newPaddedImageFont("graphics/font.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<! ")
+   --whitefont = newPaddedImageFont("graphics/fontwhite.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<!+ ")
 --
    ---- modified font
    --tetrisfont = love.graphics.newFont("graphics/font/Masaaki-Regular.ttf")
@@ -327,7 +347,7 @@ function loadimages()
    --congratsline:setFilter( "nearest", "nearest" )
 end
 
-function love.update(dt)
+function main.love.update(dt)
    if gamestate == nil then
       startdelaytime = startdelaytime + dt
       if startdelaytime >= startdelay then
@@ -361,7 +381,7 @@ function love.update(dt)
    end
 end
 
-function love.draw()
+function main.love.draw()
    if gamestate == "logo" or gamestate == "credits" or gamestate == "title" or gamestate == "menu" or gamestate == "multimenu" or gamestate == "highscoreentry" or gamestate == "options" then
       menu_draw()
    elseif gamestate == "gameA" or gamestate == "failingA" then
@@ -412,9 +432,8 @@ function newImageData(path, s)
 end
 
 function newPaddedImage(filename, s)
-   love.graphics.print(filename ,20, 60, 0, 1, 1)
+   
    local source = newImageData(filename)
-   love.graphics.print("new ,age", 20, 60, 0, 1, 1)
    
    if s then
       source = scaleImagedata(source, s)
@@ -423,17 +442,10 @@ function newPaddedImage(filename, s)
     -- Find closest power-of-two.
     local wp = math.pow(2, math.ceil(math.log(w)/math.log(2)))
     local hp = math.pow(2, math.ceil(math.log(h)/math.log(2)))
-    love.graphics.print("math", 20, 60, 0, 1, 1)
     -- Only pad if needed:
     if wp ~= w or hp ~= h then
-      love.graphics.print(
-         "" .. wp .. " wp\n" .. w .. " w\n" ..
-         "" .. hp .. " hp\n" .. h .. " h\n"
-         , 20, 60, 0, 1, 1)
       local padded = love.image.newImageDataFromDimensions(wp, hp)
-      love.graphics.print("before paste", 20, 60, 0, 1, 1)
       padded:paste(source, 0, 0)
-      love.graphics.print("pasted", 20, 60, 0, 1, 1)
       return love.graphics.newImageFromImageData(padded)
    end
     return love.graphics.newImageFromImageData(source)
@@ -456,40 +468,38 @@ function padImagedata(source) --returns image, not imagedata!
     return love.graphics.newImageFromImageData(source)
 end
 
---function newPaddedImageFont(filename, glyphs)
---    local source = newImageData(filename)
---    local w, h = source:getWidth(), source:getHeight()
---
---    -- Find closest power-of-two.
---    local wp = math.pow(2, math.ceil(math.log(w)/math.log(2)))
---    local hp = math.pow(2, math.ceil(math.log(h)/math.log(2)))
---
---    -- Only pad if needed:
---    if wp ~= w or hp ~= h then
---        local padded = love.image.newImageData(wp, hp)
---        padded:paste(source, 0, 0)
---      local image = love.graphics.newImageFromImageData(padded)
---      image:setFilter("nearest", "nearest")
---        return love.graphics.newImageFont(image, glyphs)
---    end
---
---    return love.graphics.newImageFont(source, glyphs)
---end
+function newPaddedImageFont(filename, glyphs)
+    local source = newImageData(filename)
+    local w, h = source:getWidth(), source:getHeight()
+
+    -- Find closest power-of-two.
+    local wp = math.pow(2, math.ceil(math.log(w)/math.log(2)))
+    local hp = math.pow(2, math.ceil(math.log(h)/math.log(2)))
+
+    -- Only pad if needed:
+    if wp ~= w or hp ~= h then
+        local padded = newImageData(wp, hp)
+        padded:paste(source, 0, 0)
+      local image = love.graphics.newImageFromImageData(padded)
+      image:setFilter("nearest", "nearest")
+        return love.graphics.newImageFont(image, glyphs)
+    end
+
+    return love.graphics.newImageFont(source, glyphs)
+end
 
 function scaleImagedata(imagedata, i)
-   --local width, height = imagedata:getWidth(), imagedata:getHeight()
-
-   --love.graphics.print("width: " .. width .. ", height: " .. height, 20, 60, 0, 1, 1)
-   --local scaled = love.image.newImageDataFromDimensions(width*i, height*i)
+   local width, height = imagedata:getWidth(), imagedata:getHeight()
+   local scaled = love.image.newImageDataFromDimensions(width*i, height*i)
    
-   --for y = 0, height*i-1 do
-   --   for x = 0, width*i-1 do
-   --      local r, g, b, a = imagedata:getPixel(math.floor(x/i), math.floor(y/i))
-   --      scaled:setPixel(x, y, r, g, b, a)
-   --   end
-   --end
+   for y = 0, height*i-1 do
+      for x = 0, width*i-1 do
+         local r, g, b, a = imagedata:getPixel(math.floor(x/i), math.floor(y/i))
+         scaled:setPixel(x, y, r, g, b, a)
+      end
+   end
    
-   --return scaled
+   return scaled
 end
 
 function changevolume(i)
@@ -777,7 +787,7 @@ function getrainbowcolor(i)
 end
 
 -- TODO: Either remove any code that expects keyboard text input or use vita touch keyboard
-function love.keypressed( key )
+function main.love.keypressed( key )
    if gamestate == nil then
       if controls.check("return", key) then
          gamestate = "title"
@@ -1174,3 +1184,5 @@ function love.keypressed( key )
       end
    end
 end
+
+return mainObject

@@ -14,7 +14,6 @@ LoveImageData = {
 }
 
 function LoveImageData:create(o)
-    love.graphics.print("tst", 20, 60,0,1,1)
     o = o or {}
     setmetatable(o, self)
     self.__index = self
@@ -43,18 +42,12 @@ function LoveImageData:getPixel(x, y)
 end
 
 function LoveImageData:setPixel(x, y, r, g, b, a)
-    Graphics.drawPixel(x,y,Color.new(r, g, b),self.id)
+    Graphics.drawPixel(x,y,Color.new(r, g, b))
 end
 
 
 -- TODO: There might occur bugs here
 function LoveImageData:paste(imageData, x, y)
-    love.graphics.print(
-      x .. " x\n" .. y .. " y\n" ..
-      imageData.width .. " from width\n" ..
-      imageData.height .. " from height\n" ..
-      LoveImageData.width .. " to width\n" ..
-      LoveImageData.height .. " to height\n", 20, 120, 0, 1, 1)
     for index_y = y,imageData.height,1
     do
         for index_x = x,imageData.width,1

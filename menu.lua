@@ -1,4 +1,10 @@
+local mainObject = require 'main'
 menu = {}
+logotime = 0
+scale = 1
+creditstext = {}
+bootsoundplayed = false
+oldtime = love.timer.getTime()
 
 function menu_load()
     gamestate = "logo"
@@ -35,20 +41,20 @@ function menu_draw()
 
     if gamestate == "logo" then
         if logotime <= logoduration then
-            love.graphics.draw(stabyourselflogo, 7*scale, math.floor(-22*scale + 80*(logotime/logoduration)*scale), 0, scale, scale)
+            love.graphics.draw(mainObject.stabyourselflogo, 7*scale, math.floor(-22*scale + 80*(logotime/logoduration)*scale), 0, scale, scale, 0, 0)
         else
-            love.graphics.draw(stabyourselflogo, 7*scale, math.floor(58*scale), 0, scale, scale)
+            love.graphics.draw(mainObject.stabyourselflogo, 7*scale, math.floor(58*scale), 0, scale, scale, 0, 0)
         end
 
     elseif gamestate == "credits" then------------
         for i, v in pairs(creditstext) do
             love.graphics.print( v, 0, i*8*scale, 0, scale)
         end
-        love.graphics.draw(logo, 32*scale, 80*scale, 0, scale)
+        love.graphics.draw(mainObject.logo, 32*scale, 80*scale, 0, scale, scale, 0, 0)
         ------------------------------------------
 
     elseif gamestate == "title" then----------
-        love.graphics.draw(title, 0, 0, 0, scale)
+        love.graphics.draw(mainObject.title, 0, 0, 0, scale, scale, 0,0)
         if playerselection == 1 then
             love.graphics.print(">", 1*scale, 124*scale, 0, scale)
         elseif playerselection == 2 then
@@ -59,7 +65,7 @@ function menu_draw()
         ------------------------------------------
 
     elseif gamestate == "menu" or gamestate == "highscoreentry" then
-        love.graphics.draw(gametype, 0, 0, 0, scale)
+        love.graphics.draw(gametype, 0, 0, 0, scale, 0, 0)
         if selection > 2 then
             if gameno == 1 then
                 love.graphics.print( "normal", 24*scale, 26*scale, 0, scale)
@@ -96,7 +102,7 @@ function menu_draw()
         ----------------------------------------------
 
     elseif gamestate == "multimenu" then
-        love.graphics.draw(mpmenu, 0, 0, 0, scale)
+        love.graphics.draw(mpmenu, 0, 0, 0, scale, 0, 0)
         if selection > 2 then
             if gameno == 1 then
                 love.graphics.print( "stack", 28*scale, 47*scale, 0, scale)
@@ -179,14 +185,14 @@ function menu_draw()
     end
 
     if gamestate == "options" then
-        love.graphics.draw(optionsmenu, 0, 0, 0, scale, scale)
-        love.graphics.draw(rainbowgradient, 73*scale, 33*scale, 0, scale, scale)
+        love.graphics.draw(optionsmenu, 0, 0, 0, scale, scale, 0, 0)
+        love.graphics.draw(rainbowgradient, 73*scale, 33*scale, 0, scale, scale, 0, 0)
 
         --volume slider
-        love.graphics.draw(volumeslider, 71*scale+round(76*volume)*scale, 15*scale, 0, scale, scale)
+        love.graphics.draw(volumeslider, 71*scale+round(76*volume)*scale, 15*scale, 0, scale, scale, 0, 0)
 
         --hue slider
-        love.graphics.draw(volumeslider, 71*scale+round(76*hue*scale), 31*scale, 0, scale, scale)
+        love.graphics.draw(volumeslider, 71*scale+round(76*hue*scale), 31*scale, 0, scale, scale, 0, 0)
 
         --blend out unavailable scales
         for i = 2, 7 do
@@ -221,8 +227,7 @@ function menu_update(dt)
         logotime = logotime + dt
 
         if logotime >= logoduration and bootsoundplayed == false then
-            love.audio.stop(boot)
-            love.audio.play(boot)
+            love.audio.play(mainObject.boot)
 
             bootsoundplayed = true
         end
