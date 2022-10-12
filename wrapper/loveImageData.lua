@@ -7,13 +7,13 @@
 --
 
 
-LoveImageData = {
+local loveImageData = {
     id = 0,
     height = 0,
     width = 0
 }
 
-function LoveImageData:create(o)
+function loveImageData:new(o) 
     o = o or {}
     setmetatable(o, self)
     self.__index = self
@@ -23,39 +23,42 @@ function LoveImageData:create(o)
     return o
 end
 
-function LoveImageData:setFilter (filterWidth, filterHeigth)
+function loveImageData:setFilter (filterWidth, filterHeigth)
     self.filterWidth = filterWidth
     self.filterHeigth = filterHeigth
 end
 
 
-function LoveImageData:getHeight()
+function loveImageData:getHeight()
     return self.height
 end
 
-function LoveImageData:getWidth()
+function loveImageData:getWidth()
     return self.width
 end
 
-function LoveImageData:getPixel(x, y)
+function loveImageData:getPixel(x, y)
     return Graphics.getPixel(x, y, self.id)
 end
 
-function LoveImageData:setPixel(x, y, r, g, b, a)
+function loveImageData:setPixel(x, y, r, g, b, a)
     Graphics.drawPixel(x,y,Color.new(r, g, b))
 end
 
 
 -- TODO: There might occur bugs here
-function LoveImageData:paste(imageData, x, y)
+function loveImageData:paste(imageData, x, y)
     for index_y = y,imageData.height,1
     do
         for index_x = x,imageData.width,1
         do
-            Graphics.drawPixel(index_x,index_y, Graphics.getPixel(x,y,imageData.id),LoveImageData.id)
+            Graphics.drawPixel(index_x,index_y, Graphics.getPixel(x,y,imageData.id),loveImageData.id)
         end
     end
 end
 
+function loveImageData:toString() 
+    return "id: " .. loveImageData.id .. "\nheigth: " .. loveImageData.height .. "\nwidth: " .. loveImageData.width
+end
 
-
+return loveImageData

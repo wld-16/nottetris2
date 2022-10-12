@@ -1,13 +1,19 @@
-local mainObject = require 'main'
-menu = {}
-logotime = 0
-scale = 1
-creditstext = {}
-bootsoundplayed = false
-oldtime = love.timer.getTime()
+local menu = {}
+local love = {}
+local main = 0
+local logotime = 0
+local creditstext = {}
+local bootsoundplayed = false
+local oldtime = 0
+local scale = 1
+
+function menu.loadMain(mainInstance, loveInstance)
+    main = mainInstance
+    love = loveInstance
+end
 
 function menu_load()
-    gamestate = "logo"
+    main.gamestate = "logo"
     creditstext = {
         "'Tm and C2011 sy,not",
         "tetris 2 licensed to",
@@ -39,22 +45,24 @@ function menu_draw()
         love.graphics.translate(fullscreenoffsetX, fullscreenoffsetY)
     end
 
-    if gamestate == "logo" then
+    love.graphics.print( "gamstate menu: " .. main.gamestate, 300, 30, 0, 1, 1)
+
+    if main.gamestate == "logo" then
         if logotime <= logoduration then
-            love.graphics.draw(mainObject.stabyourselflogo, 7*scale, math.floor(-22*scale + 80*(logotime/logoduration)*scale), 0, scale, scale, 0, 0)
+            love.graphics.draw(main.stabyourselflogo, 7*scale, math.floor(-22*scale + 80*(logotime/logoduration)*scale), 0, scale, scale, 0, 0)
         else
-            love.graphics.draw(mainObject.stabyourselflogo, 7*scale, math.floor(58*scale), 0, scale, scale, 0, 0)
+            love.graphics.draw(main.stabyourselflogo, 7*scale, math.floor(58*scale), 0, scale, scale, 0, 0)
         end
 
-    elseif gamestate == "credits" then------------
+    elseif main.gamestate == "credits" then------------
         for i, v in pairs(creditstext) do
             love.graphics.print( v, 0, i*8*scale, 0, scale)
         end
-        love.graphics.draw(mainObject.logo, 32*scale, 80*scale, 0, scale, scale, 0, 0)
+        love.graphics.draw(main.logo, 32*scale, 80*scale, 0, scale, scale, 0, 0)
         ------------------------------------------
 
-    elseif gamestate == "title" then----------
-        love.graphics.draw(mainObject.title, 0, 0, 0, scale, scale, 0,0)
+    elseif main.gamestate == "title" then----------
+        love.graphics.draw(main.title, 0, 0, 0, scale, scale, 0,0)
         if playerselection == 1 then
             love.graphics.print(">", 1*scale, 124*scale, 0, scale)
         elseif playerselection == 2 then
@@ -64,8 +72,8 @@ function menu_draw()
         end
         ------------------------------------------
 
-    elseif gamestate == "menu" or gamestate == "highscoreentry" then
-        love.graphics.draw(gametype, 0, 0, 0, scale, 0, 0)
+    elseif main.gamestate == "menu" or main.gamestate == "highscoreentry" then
+        love.graphics.draw(main.gametype, 0, 0, 0, scale, scale, 0, 0)
         if selection > 2 then
             if gameno == 1 then
                 love.graphics.print( "normal", 24*scale, 26*scale, 0, scale)
@@ -101,8 +109,8 @@ function menu_draw()
         end
         ----------------------------------------------
 
-    elseif gamestate == "multimenu" then
-        love.graphics.draw(mpmenu, 0, 0, 0, scale, 0, 0)
+    elseif main.gamestate == "multimenu" then
+        love.graphics.draw(main.mpmenu, 0, 0, 0, scale, 0, 0)
         if selection > 2 then
             if gameno == 1 then
                 love.graphics.print( "stack", 28*scale, 47*scale, 0, scale)
@@ -151,7 +159,7 @@ function menu_draw()
         end
     end
 
-    if gamestate == "menu" or gamestate == "highscoreentry" then
+    if main.gamestate == "menu" or main.gamestate == "highscoreentry" then
         for i = 1, 3 do
             if tonumber(highscore[i]) > 0 then
                 --name
@@ -166,7 +174,7 @@ function menu_draw()
         end
     end
 
-    if gamestate == "highscoreentry" then
+    if main.gamestate == "highscoreentry" then
         if highscorename[highscoreno]:len() < 6 then
             offsetX = 0
             for i = 1, highscorename[highscoreno]:len() do
@@ -184,15 +192,15 @@ function menu_draw()
         end
     end
 
-    if gamestate == "options" then
-        love.graphics.draw(optionsmenu, 0, 0, 0, scale, scale, 0, 0)
-        love.graphics.draw(rainbowgradient, 73*scale, 33*scale, 0, scale, scale, 0, 0)
+    if main.gamestate == "options" then
+        love.graphics.draw(main.optionsmenu, 0, 0, 0, scale, scale, 0, 0)
+        love.graphics.draw(main.rainbowgradient, 73*scale, 33*scale, 0, scale, scale, 0, 0)
 
         --volume slider
-        love.graphics.draw(volumeslider, 71*scale+round(76*volume)*scale, 15*scale, 0, scale, scale, 0, 0)
+        love.graphics.draw(main.volumeslider, 71*scale+round(76*volume)*scale, 15*scale, 0, scale, scale, 0, 0)
 
         --hue slider
-        love.graphics.draw(volumeslider, 71*scale+round(76*hue*scale), 31*scale, 0, scale, scale, 0, 0)
+        love.graphics.draw(main.volumeslider, 71*scale+round(76*hue*scale), 31*scale, 0, scale, scale, 0, 0)
 
         --blend out unavailable scales
         for i = 2, 7 do
@@ -223,31 +231,31 @@ function menu_draw()
 end
 
 function menu_update(dt)
-    if gamestate == "logo" then
+    if main.gamestate == "logo" then
         logotime = logotime + dt
 
         if logotime >= logoduration and bootsoundplayed == false then
-            love.audio.play(mainObject.boot)
+            love.audio.play(main.boot)
 
             bootsoundplayed = true
         end
 
         if logotime >= logoduration + logodelay then
             oldtime = love.timer.getTime()
-            gamestate = "credits"
+            main.gamestate = "credits"
         end
     end
 
-    if gamestate == "credits" then
+    if main.gamestate == "credits" then
         currenttime = love.timer.getTime()
         if currenttime - oldtime > creditsdelay then
-            gamestate = "title"
+            main.gamestate = "title"
             love.graphics.setBackgroundColor( 0, 0, 0)
-            love.audio.play(musictitle)
+            love.audio.play(main.musictitle)
         end
     end
 
-    if gamestate == "menu" or gamestate == "multimenu" or gamestate == "options" then
+    if main.gamestate == "menu" or main.gamestate == "multimenu" or main.gamestate == "options" then
         currenttime = love.timer.getTime()
         if currenttime - oldtime > selectblinkrate then
             selectblink = not selectblink
@@ -255,7 +263,7 @@ function menu_update(dt)
         end
     end
 
-    if gamestate == "options" then
+    if main.gamestate == "options" then
         if optionsselection == 2 then
             if love.keyboard.isDown("left") then
                 if hue > 0 then
@@ -279,7 +287,7 @@ function menu_update(dt)
         end
     end
 
-    if gamestate == "highscoreentry" then
+    if main.gamestate == "highscoreentry" then
         currenttime = love.timer.getTime()
         if currenttime - oldtime > cursorblinkrate then
             cursorblink = not cursorblink
@@ -294,3 +302,5 @@ function menu_update(dt)
         end
     end
 end
+
+return menu

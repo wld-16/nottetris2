@@ -1,9 +1,17 @@
-gameA = {}
+local gameA = {}
+
+local main = {}
+local love = {}
+
+function gameA.loadMain(mainInstance, loveInstance)
+	main = mainInstance
+	love = loveInstance
+end
 
 function gameA_load()
-	gamestate = "gameA"
+	main.gamestate = "gameA"
 	
-	pause = false
+	main.pause = false
 	skipupdate = true
 	
 	difficulty_speed = 100
@@ -146,13 +154,13 @@ function gameA_draw()
 	--tetrishapes--
 	if cuttingtimer == lineclearduration then
 		for i,v in pairs(tetribodies) do
-			if pause == false then
+			if main.pause == false then
 				love.graphics.draw( tetriimages[i], v:getX()*physicsscale, v:getY()*physicsscale, v:getAngle(), 1, 1, piececenter[tetrikind[i]][1]*scale, piececenter[tetrikind[i]][2]*scale)
 			end
 		end
 	else
 		for i = 1, #tetricutimg do
-			if pause == false then
+			if main.pause == false then
 				love.graphics.draw( tetricutimg[i], tetricutpos[i*2-1]*physicsscale, tetricutpos[i*2]*physicsscale, tetricutang[i], 1, 1, piececenter[tetricutkind[i]][1]*scale, piececenter[tetricutkind[i]][2]*scale)
 			end
 		end
@@ -179,7 +187,7 @@ function gameA_draw()
 	
 	love.graphics.setColor(255, 255, 255)
 	--Next piece
-	if pause == false then
+	if main.pause == false then
 		love.graphics.draw(nextpieceimg[nextpiece], 136*scale, 120*scale, nextpiecerot, 1, 1, piececenterpreview[nextpiece][1]*scale, piececenterpreview[nextpiece][2]*scale)
 	end
 	
@@ -233,8 +241,8 @@ function gameA_draw()
 	
 	---------
 	--start--
-	if pause == true then
-		love.graphics.draw(pausegraphiccutoff, 14*scale, 0, 0, scale, scale)
+	if main.pause == true then
+		love.graphics.draw(main.pausegraphiccutoff, 14*scale, 0, 0, scale, scale, 0, 0)
 	end
 	---------
 	
@@ -317,7 +325,7 @@ function gameA_update(dt)
 		end
 	end
 		
-	if gamestate == "gameA" then
+	if main.gamestate == "gameA" then
 		if controls.isDown("rotateright") then
 			if tetribodies[1]:getAngularVelocity() < 3 then
 				tetribodies[1]:applyTorque( 70 )
@@ -372,7 +380,7 @@ function gameA_update(dt)
 	end
 	densityupdatetimer = densityupdatetimer + dt
 	
-	if gamestate == "failingA" then
+	if main.gamestate == "failingA" then
 		clearcheck = true
 		for i,v in pairs(tetribodies) do
 			if v:getY() < 648 then
@@ -997,7 +1005,7 @@ function checklinedensity(active) --checks all 18 lines and, if active == true, 
 			--Draw the screen before removing lines.
 			love.graphics.clear()
 			gameA_draw()
-			love.graphics.present( )
+			love.graphics.present()
 			
 			for i = 1, 18 do
 				if linesremoved[i] then
@@ -1163,9 +1171,9 @@ function collideA(a, b, coll) --box2d callback. calls endblock.
 	
 	if a[1] == 1 or b[1] == 1 then
 		if a[1] ~= "left" and a[1] ~= "right" and b[1] ~= "left" and b[1] ~= "right" then 
-			if gamestate == "gameA" then
+			if main.gamestate == "gameA" then
 				if tetribodies[1]:getY() < losingY then
-					gamestate = "failingA"
+					main.gamestate = "failingA"
 					if musicno < 4 then
 						love.audio.stop(music[musicno])
 					end
@@ -1210,3 +1218,5 @@ function endblockA() --handles failing, moving the current block to the end of t
 		nextpiece = math.random(7)
 	end
 end
+
+return gameA

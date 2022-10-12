@@ -6,11 +6,11 @@
 -- To change this template use File | Settings | File Templates.
 --
 
-LoveFont = {
+local loveFont = {
     id = 0
 }
 
-function LoveFont:create(o)
+function loveFont:new(o) 
     o = o or {}
     setmetatable(o, self)
     self.__index = self
@@ -18,3 +18,4 @@ function LoveFont:create(o)
     return o
 end
 
+return loveFont

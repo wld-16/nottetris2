@@ -6,23 +6,32 @@
 -- To change this template use File | Settings | File Templates.
 --
 
-LoveSound = {
-    id = 0,
-    volume = 0,
-    isLooping = false
+local loveSound = {
+	id = 0,
+	volume = 0,
+	isLooping = false
 }
 
-function LoveSound:create(o)
-    o = o or {}
-    setmetatable(o, self)
-    self.__index = self
-    return o
+function loveSound:new(o)
+	o = o or {}
+	setmetatable(o, self)
+	self.__index = self
+	self.id = o.id
+	self.volume = o.volume
+	self.isLooping = o.isLooping
+	return o
 end
 
-function LoveSound:setVolume (volume)
-    self.volume = volume
+function loveSound:setVolume (volume)
+	self.volume = volume
 end
 
-function LoveSound:setLooping (isLooping)
-    self.isLooping = isLooping
+function loveSound:setLooping (isLooping)
+	self.isLooping = isLooping
 end
+
+function loveSound:toString()
+	return "id: " .. loveSound.id .. "\nvolume: " .. loveSound.volume .. "\nisLooping: " .. tostring(loveSound.isLooping)
+end
+
+return loveSound

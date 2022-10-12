@@ -1,18 +1,10 @@
---
--- Created by IntelliJ IDEA.
--- User: spacewave
--- Date: 08.03.2021
--- Time: 15:25
--- To change this template use File | Settings | File Templates.
---
+local loveSound = require "loveSound"
+local loveImage = require "loveImage"
+local loveImageData = require "loveImageData"
+local loveEnvironment = require "loveEnvironment"
+local loveFont = require "loveFont"
 
-dofile("ux0:/data/lpp-vita/samples/nottetris2/wrapper/loveSound.lua")
-dofile("ux0:/data/lpp-vita/samples/nottetris2/wrapper/loveImage.lua")
-dofile("ux0:/data/lpp-vita/samples/nottetris2/wrapper/loveImageData.lua")
-dofile("ux0:/data/lpp-vita/samples/nottetris2/wrapper/loveEnvironment.lua")
-dofile("ux0:/data/lpp-vita/samples/nottetris2/wrapper/loveFont.lua")
-
-love = {
+local love = {
     graphics = {},
     filesystem = {},
     mouse = {},
@@ -27,7 +19,7 @@ love = {
 }
 
 function love.init()
-    love.env = LoveEnvironment:create({id = 0, backgroundColor = Color.new(0,0,0,0), activeFont = 0, timer = Timer.new()})
+    love.env = loveEnvironment:new({id = 0, backgroundColor = Color.new(0,0,0,0), activeFont = 0, timer = Timer.new()})
 end
 
 function love.graphics.getModes()
@@ -79,15 +71,15 @@ end
 
 function love.audio.newSource(filePath, type)
     local soundId = Sound.open("ux0:/data/lpp-vita/samples/nottetris2/" .. filePath)
-    return LoveSound:create({id = soundId, volume = 0, isLooping = false})
+    return loveSound:new({id = soundId, volume = 0, isLooping = false})
 end
 
 function love.graphics.newImageFromFile(filePath)
-    return LoveImage:create({id = Graphics.loadImage("ux0:/data/lpp-vita/samples/nottetris2/" .. filePath), filterWidth = "", filterHeight = ""})
+    return loveImage:new({id = Graphics.loadImage("ux0:/data/lpp-vita/samples/nottetris2/" .. filePath), filterWidth = "", filterHeight = ""})
 end
 
 function love.graphics.newImageFromImageData(imageData)
-    return LoveImage:create({id = imageData.id, filterWidth = "", filterHeight = ""})
+    return loveImage:new({id = imageData.id, filterWidth = "", filterHeight = ""})
 end
 
 function love.graphics.setBackgroundColor(r,g,b)
@@ -95,7 +87,7 @@ function love.graphics.setBackgroundColor(r,g,b)
 end
 
 function love.graphics.newImageFont(image, glyphs)
-    return LoveFont:create({ id = Font.load("ux0:/data/lpp-vita/samples/nottetris2/" .. fontPath)})
+    return loveFont:new({ id = Font.load("ux0:/data/lpp-vita/samples/nottetris2/" .. fontPath)})
 end
 
 function love.image.newImageDataFromPath(filePath)
@@ -103,17 +95,22 @@ function love.image.newImageDataFromPath(filePath)
     local graphics_width = Graphics.getImageWidth(graphicsId)
     local graphics_height = Graphics.getImageHeight(graphicsId)
 
-    return LoveImageData:create({id = graphicsId, width = graphics_width, height = graphics_height})
+    local graphic = loveImageData:new({id = graphicsId, width = graphics_width, height = graphics_height})
+
+    love.graphics.debugPrint("filePath: " .. filePath .. "\nGraphics Id: " .. graphicsId .. "\nWidth: " .. graphics_width .. "\nHeight:" .. graphics_height)
+    --love.graphics.draw(graphic, 40,40, 0, 1, 1, 0, 0)
+
+    return graphic
 end
 
 function love.image.newImageDataFromDimensions(image_width, image_height)
-         idsa = Graphics.createImage(image_width, image_height, Color.new(0,0,0))
-         obj = LoveImageData:create({id = idsa, width = image_width, height = image_height})
-         return obj
+     idsa = Graphics.createImage(image_width, image_height, Color.new(0,0,0))
+     obj = loveImageData:new({id = idsa, width = image_width, height = image_height})
+     return obj
 end
 
 function love.graphics.newFont(fontPath)
-    return LoveFont:create({ id = Font.load("ux0:/data/lpp-vita/samples/nottetris2/" .. fontPath)})
+    return loveFont:new({ id = Font.load("ux0:/data/lpp-vita/samples/nottetris2/" .. fontPath)})
 end
 
 function love.graphics.setFont(font)
@@ -128,8 +125,12 @@ function love.audio.play(snd)
     end
 end
 
+function love.audio.pause(snd)
+    Sound.pause(snd.id)
+end
+
 function love.audio.stop(snd)
-    Sound.pause(snd)
+    Sound.pause(snd.id)
 end
 
 function love.timer.getTime()
@@ -151,10 +152,7 @@ function love.graphics.draw(drawable, x, y, angle, scale_x, scale_y, offset_x, o
     local y_position = y + love.coordinateSystemTranslation.y + offset_y
 
     Graphics.initBlend()
-    Graphics.drawImage(
-        x_position,
-        y_position,
-        drawable.id)
+    Graphics.drawImage(x_position, y_position, drawable.id)
     Graphics.termBlend()
 end
 
@@ -171,9 +169,50 @@ function love.graphics.print( text, x, y, r, scale_x, scale_y)
     Graphics.termBlend()
 end
 
-function love.graphics.debugPrint( text, x, y, r, scale_x, scale_y)
+function love.graphics.debugPrint( text )
     Graphics.initBlend()
-    Font.print(love.env.activeFont.id, x, y, text, Color.new(0, 255, 255))
+    Screen.clear()
+    Graphics.debugPrint(20, 20, text, Color.new(255, 255, 255))
     Graphics.termBlend()
     Screen.flip()
 end
+
+function love.physics.newWorld(x1, y1, x2, y2, xg, yg, sleep ) 
+-- TODO: Implement
+end
+
+function love.physics.newBody(world, x, y, m, i)
+-- TODO: Implement
+end
+
+-- function love.physics.newPolygonShape( wallbodies, ...)
+function love.physics.newPolygonShape( body, ...)
+-- TODO: Implement for all cases
+end
+
+-- for wall
+function love.physics.newPolygonShape( wallbodies, x1, y1, x2,y2, x3,y3, x4,y4)
+
+end
+
+function love.physics.newRectangleShape(body, x, y, width, height, angle)
+-- TODO: Implement
+end
+
+function love.graphics.setColor(r, g, b)
+-- TODO: Implement
+end
+
+function love.graphics.rectangle(mode, x, y, width, height)
+-- TODO: Implement
+end
+
+function love.graphics.clear()
+    Screen.clear()
+end
+            
+function love.graphics.present()
+-- TODO: Implement
+end
+
+return love

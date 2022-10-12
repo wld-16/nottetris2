@@ -6,14 +6,14 @@
 -- To change this template use File | Settings | File Templates.
 --
 
-LoveEnvironment = {
+local loveEnvironment = {
     id = 0,
     backgroundColor = 0,
     activeFont = 0,
     timer = 0
 }
 
-function LoveEnvironment:create(o)
+function loveEnvironment:new(o)
     o = o or {}
     setmetatable(o, self)
     self.__index = self
@@ -23,10 +23,16 @@ function LoveEnvironment:create(o)
     return o
 end
 
-function LoveEnvironment:setBackgroundColor (backgroundColor)
+function loveEnvironment:setBackgroundColor (backgroundColor)
     self.backgroundColor = backgroundColor
 end
 
-function LoveEnvironment:setActiveFont(font)
+function loveEnvironment:setActiveFont(font)
     self.activeFont = font
 end
+
+function loveEnvironment:toString()
+    return "id: " .. self.id .. "\nbackground: " .. backgroundColor .. "\ntimer: " .. timer
+end
+
+return loveEnvironment
