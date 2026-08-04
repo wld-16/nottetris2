@@ -1,0 +1,6 @@
+.idea
+.claude
+
+# Pulled off the Vita for debugging
+error.log
+trace.log

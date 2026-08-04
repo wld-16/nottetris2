@@ -1,87 +1,31 @@
-
-local love = require "love"
-local menu = require "menu"
-local gameA = require "gameA"
-local main = {
-   gamestate = "logo",
-   boot = {},
-   musictitle = {}, 
-   stabyourselflogo = {},
-   logo = {},
-   title = {},
-   blockfall = {},
-   blockturn = {},
-   blockmove = {},
-   lineclear = {},
-   fourlineclear = {},
-   gameover1 = {},
-   gameover2 = {},
-   pausesound = {},
-   highscorebeep = {},
-   newlevel = {},
-   rainbowgradient = {},
-   gametype = {},
-   mpmenu = {},
-   optionsmenu = {},
-   volumeslider = {},
-   gamebackground = {},
-   gamebackgroundcutoff = {},
-   gamebackgroundmulti = {},
-   multiresults = {},
-   number1 = {},
-   number2 = {},
-   number3 = {},
-   gameover = {},
-   gameovercutoff = {},
-   pausegraphic = {},
-   pausegraphiccutoff = {},
-   marioidle = {},
-   mariojump = {},
-   mariocry1 = {},
-   mariocry2 = {},
-   luigiidle = {},
-   luigijump = {},
-   luigicry1 = {},
-   luigicry2 = {},
-   rocket1 = {},
-   rocket2 = {},
-   rocket3 = {},
-   spaceshuttle = {},
-   rocketbackground = {},
-   bigrocketbackground = {},
-   bigrockettakeoffbackground = {},
-   smoke1left = {},
-   smoke1right = {},
-   smoke2left = {},
-   smoke2right = {},
-   fire1 = {},
-   fire2 = {},
-   firebig1 = {},
-   firebig2 = {},
-   congratsline = {},
-   nextpieceimg = {},
-   music = {}
+main = {
+   love = {}
 }
 
 function main.load()
    --requires--
-   require "controls"
-   require "gameB"
-   require "gameBmulti"
-   require "failed"
-   require "rocket"
+   love.trace("dofile controls/menu/failed/rocket")
+   dofile("ux0:/data/lpp-vita/samples/nottetris2/controls.lua")
+   dofile("ux0:/data/lpp-vita/samples/nottetris2/gameB.lua")
+   dofile("ux0:/data/lpp-vita/samples/nottetris2/gameBmulti.lua")
+   dofile("ux0:/data/lpp-vita/samples/nottetris2/gameA.lua")
+   dofile("ux0:/data/lpp-vita/samples/nottetris2/menu.lua")
+   dofile("ux0:/data/lpp-vita/samples/nottetris2/failed.lua")
+   dofile("ux0:/data/lpp-vita/samples/nottetris2/rocket.lua")
    
    vsync = true
-   
+
+   love.trace("autosize")
    autosize()
-   
+
    suggestedscale = math.min(math.floor((desktopheight-50)/144), math.floor((desktopwidth-10)/160))
    if suggestedscale > 5 then
       suggestedscale = 5
    end
    
+   love.trace("loadoptions")
    loadoptions()
-   
+
    maxscale = math.min(math.floor(desktopheight/144), math.floor(desktopwidth/160)) 
    maxmpscale = math.min(math.floor(desktopheight/144), math.floor(desktopwidth/274)) 
    
@@ -102,11 +46,12 @@ function main.load()
       maxscale = math.min(math.floor(desktopheight/144), math.floor(desktopwidth/160))
       
       scale = maxscale
-      
-      fullscreenoffsetX = (desktopwidth-160*scale)/2
-      fullscreenoffsetY = (desktopheight-144*scale)/2
+
+      -- no letterboxing: the wrapper stretches the canvas over the whole Vita screen
+      fullscreenoffsetX = 0
+      fullscreenoffsetY = 0
    end
-   
+
    physicsscale = scale/4
    
    --pieces--
@@ -114,66 +59,71 @@ function main.load()
    tetriimagedata = {}
    
    ----SOUND--
-   main.music = {}
+   -- Roughly 20 Sound.open calls, each parsing an ogg off the memory card, so
+   -- this block is worth its own breadcrumb: it is the longest stretch of the
+   -- load with nothing on screen.
+   love.trace("opening sounds")
+   music = {}
+
+   music[1] = love.audio.newSource( "sounds/themeA.ogg")
+   music[1]:setVolume( 0.6 )
+   music[1]:setLooping( true )
    
-   main.music[1] = love.audio.newSource( "sounds/themeA.ogg")
-   main.music[1]:setVolume( 0.6 )
-   main.music[1]:setLooping( true )
-   
-   main.music[2] = love.audio.newSource( "sounds/themeB.ogg", "stream")
-   main.music[2]:setVolume( 0.6 )
-   main.music[2]:setLooping( true )
+   music[2] = love.audio.newSource( "sounds/themeB.ogg", "stream")
+   music[2]:setVolume( 0.6 )
+   music[2]:setLooping( true )
 
-   main.music[3] = love.audio.newSource( "sounds/themeC.ogg", "stream")
-   main.music[3]:setVolume( 0.6 )
-   main.music[3]:setLooping( true )
+   music[3] = love.audio.newSource( "sounds/themeC.ogg", "stream")
+   music[3]:setVolume( 0.6 )
+   music[3]:setLooping( true )
 
-   main.musictitle = love.audio.newSource( "sounds/titlemusic.ogg", "stream")
-   main.musictitle:setVolume( 0.6 )
-   main.musictitle:setLooping( true )
+   musictitle = love.audio.newSource( "sounds/titlemusic.ogg", "stream")
+   musictitle:setVolume( 0.6 )
+   musictitle:setLooping( true )
 
-   main.musichighscore = love.audio.newSource( "sounds/highscoremusic.ogg", "stream")
-   main.musichighscore:setVolume( 0.6 )
-   main.musichighscore:setLooping( true )
+   musichighscore = love.audio.newSource( "sounds/highscoremusic.ogg", "stream")
+   musichighscore:setVolume( 0.6 )
+   musichighscore:setLooping( true )
 
-   main.musicrocket4 = love.audio.newSource( "sounds/rocket4.ogg", "stream")
-   main.musicrocket4:setVolume( 0.6 )
-   main.musicrocket4:setLooping( false )
+   musicrocket4 = love.audio.newSource( "sounds/rocket4.ogg", "stream")
+   musicrocket4:setVolume( 0.6 )
+   musicrocket4:setLooping( false )
 
-   main.musicrocket1to3 = love.audio.newSource( "sounds/rocket1to3.ogg", "stream")
-   main.musicrocket1to3:setVolume( 0.6 )
-   main.musicrocket1to3:setLooping( false )
+   musicrocket1to3 = love.audio.newSource( "sounds/rocket1to3.ogg", "stream")
+   musicrocket1to3:setVolume( 0.6 )
+   musicrocket1to3:setLooping( false )
 
-   main.musicresults = love.audio.newSource( "sounds/resultsmusic.ogg", "stream")
-   main.musicresults:setVolume( 1 )
-   main.musicresults:setLooping( false )
+   musicresults = love.audio.newSource( "sounds/resultsmusic.ogg", "stream")
+   musicresults:setVolume( 1 )
+   musicresults:setLooping( false )
 
-   main.highscoreintro = love.audio.newSource( "sounds/highscoreintro.ogg", "stream")
-   main.highscoreintro:setVolume( 0.6 )
-   main.highscoreintro:setLooping( false )
+   highscoreintro = love.audio.newSource( "sounds/highscoreintro.ogg", "stream")
+   highscoreintro:setVolume( 0.6 )
+   highscoreintro:setLooping( false )
 
-   main.musicoptions = love.audio.newSource( "sounds/musicoptions.ogg", "stream")
-   main.musicoptions:setVolume( 1 )
-   main.musicoptions:setLooping( true )
+   musicoptions = love.audio.newSource( "sounds/musicoptions.ogg", "stream")
+   musicoptions:setVolume( 1 )
+   musicoptions:setLooping( true )
 
-   main.boot = love.audio.newSource( "sounds/boot.ogg")
-   main.blockfall = love.audio.newSource( "sounds/blockfall.ogg", "stream")
-   main.blockturn = love.audio.newSource( "sounds/turn.ogg", "stream")
-   main.blockmove = love.audio.newSource( "sounds/move.ogg", "stream")
-   main.lineclear = love.audio.newSource( "sounds/lineclear.ogg", "stream")
-   main.fourlineclear = love.audio.newSource( "sounds/4lineclear.ogg", "stream")
-   main.gameover1 = love.audio.newSource( "sounds/gameover1.ogg", "stream")
-   main.gameover2 = love.audio.newSource( "sounds/gameover2.ogg", "stream")
-   main.pausesound = love.audio.newSource( "sounds/pause.ogg", "stream")
-   main.highscorebeep = love.audio.newSource( "sounds/highscorebeep.ogg", "stream")
-   main.newlevel = love.audio.newSource( "sounds/newlevel.ogg", "stream")
-   main.newlevel:setVolume( 0.6 )
+   boot = love.audio.newSource( "sounds/boot.ogg")
+   blockfall = love.audio.newSource( "sounds/blockfall.ogg", "stream")
+   blockturn = love.audio.newSource( "sounds/turn.ogg", "stream")
+   blockmove = love.audio.newSource( "sounds/move.ogg", "stream")
+   lineclear = love.audio.newSource( "sounds/lineclear.ogg", "stream")
+   fourlineclear = love.audio.newSource( "sounds/4lineclear.ogg", "stream")
+   gameover1 = love.audio.newSource( "sounds/gameover1.ogg", "stream")
+   gameover2 = love.audio.newSource( "sounds/gameover2.ogg", "stream")
+   pausesound = love.audio.newSource( "sounds/pause.ogg", "stream")
+   highscorebeep = love.audio.newSource( "sounds/highscorebeep.ogg", "stream")
+   newlevel = love.audio.newSource( "sounds/newlevel.ogg", "stream")
+   newlevel:setVolume( 0.6 )
 
+   love.trace("changevolume")
    changevolume(volume)
 
    ----IMAGES THAT WON'T CHANGE HUE:
-   main.rainbowgradient = love.graphics.newImageFromFile("graphics/rainbow.png")
-   main.rainbowgradient:setFilter("nearest", "nearest")
+   love.trace("image graphics/rainbow.png")
+   rainbowgradient = love.graphics.newImageFromFile("graphics/rainbow.png")rainbowgradient:setFilter("nearest", "nearest")
 
    --Whitelist for highscorenames--
    whitelist = {}
@@ -254,17 +204,17 @@ function main.load()
    piececenterpreview[6] = {13, 7}
    piececenterpreview[7] = {13, 9}
    --
+   love.trace("loadhighscores")
    loadhighscores()
    --
+   love.trace("loadimages")
    loadimages()
-
-   tetrisfont = love.graphics.newFont("graphics/font/Masaaki-Regular.ttf")
-   love.graphics.setFont(tetrisfont)
+   love.trace("loadimages done")
    --
    ----all done!
-   if startdelay == 0 then
-      menu_load()
-   end
+   --if startdelay == 0 then
+   --   menu_load()
+   --end
 end
 
 function start()
@@ -274,79 +224,77 @@ end
 function loadimages()
    --IMAGES--
    --menu--
-   main.stabyourselflogo = newPaddedImage("graphics/stabyourselflogo.png")
-   main.logo = newPaddedImage("graphics/logo.png")
-   main.title = newPaddedImage("graphics/rocketbackground.png")
-   main.gametype = newPaddedImage("graphics/gametype.png")
-   main.mpmenu = newPaddedImage("graphics/mpmenu.png")
-   main.optionsmenu = newPaddedImage("graphics/options.png")
-   main.volumeslider = newPaddedImage("graphics/volumeslider.png")
+   stabyourselflogo = newPaddedImage("graphics/stabyourselflogo.png")
+   logo = newPaddedImage("graphics/logo.png")
+   title = newPaddedImage("graphics/title.png")
+   gametype = newPaddedImage("graphics/gametype.png")
+   mpmenu = newPaddedImage("graphics/mpmenu.png")
+   optionsmenu = newPaddedImage("graphics/options.png")
+   volumeslider = newPaddedImage("graphics/volumeslider.png")
    ----game--
-   main.gamebackground = newPaddedImage("graphics/gamebackground.png")
-   main.gamebackgroundcutoff = newPaddedImage("graphics/gamebackgroundgamea.png")
-   main.gamebackgroundmulti = newPaddedImage("graphics/gamebackgroundmulti.png")
-   main.multiresults = newPaddedImage("graphics/multiresults.png")
+   gamebackground = newPaddedImage("graphics/gamebackground.png")
+   gamebackgroundcutoff = newPaddedImage("graphics/gamebackgroundgamea.png")
+   gamebackgroundmulti = newPaddedImage("graphics/gamebackgroundmulti.png")
+   multiresults = newPaddedImage("graphics/multiresults.png")
 
-   main.number1 = newPaddedImage("graphics/versus/number1.png")
-   main.number2 = newPaddedImage("graphics/versus/number2.png")
-   main.number3 = newPaddedImage("graphics/versus/number3.png")
+   number1 = newPaddedImage("graphics/versus/number1.png")
+   number2 = newPaddedImage("graphics/versus/number2.png")
+   number3 = newPaddedImage("graphics/versus/number3.png")
 
-   main.gameover = newPaddedImage("graphics/gameover.png")
-   main.gameovercutoff = newPaddedImage("graphics/gameovercutoff.png")
-   main.pausegraphic = newPaddedImage("graphics/pause.png")
-   main.pausegraphiccutoff = newPaddedImage("graphics/pausecutoff.png")
+   gameover = newPaddedImage("graphics/gameover.png")
+   gameovercutoff = newPaddedImage("graphics/gameovercutoff.png")
+   pausegraphic = newPaddedImage("graphics/pause.png")
+   pausegraphiccutoff = newPaddedImage("graphics/pausecutoff.png")
 
    ----figures--
-   main.marioidle = newPaddedImage("graphics/versus/marioidle.png")
-   main.mariojump = newPaddedImage("graphics/versus/mariojump.png")
-   main.mariocry1 = newPaddedImage("graphics/versus/mariocry1.png")
-   main.mariocry2 = newPaddedImage("graphics/versus/mariocry2.png")
+   marioidle = newPaddedImage("graphics/versus/marioidle.png")
+   mariojump = newPaddedImage("graphics/versus/mariojump.png")
+   mariocry1 = newPaddedImage("graphics/versus/mariocry1.png")
+   mariocry2 = newPaddedImage("graphics/versus/mariocry2.png")
 
-   main.luigiidle = newPaddedImage("graphics/versus/luigiidle.png")
-   main.luigijump = newPaddedImage("graphics/versus/luigijump.png")
-   main.luigicry1 = newPaddedImage("graphics/versus/luigicry1.png")
-   main.luigicry2 = newPaddedImage("graphics/versus/luigicry2.png")
+   luigiidle = newPaddedImage("graphics/versus/luigiidle.png")
+   luigijump = newPaddedImage("graphics/versus/luigijump.png")
+   luigicry1 = newPaddedImage("graphics/versus/luigicry1.png")
+   luigicry2 = newPaddedImage("graphics/versus/luigicry2.png")
 
    --rockets--
-   main.rocket1 = newPaddedImage("graphics/rocket1.png");
-   main.rocket1:setFilter( "nearest", "nearest" )
-   main.rocket2 = newPaddedImage("graphics/rocket2.png")
-   main.rocket3 = newPaddedImage("graphics/rocket3.png")
-   main.spaceshuttle = newPaddedImage("graphics/spaceshuttle.png")
+   rocket1 = newPaddedImage("graphics/rocket1.png");rocket1:setFilter( "nearest", "nearest" )
+   rocket2 = newPaddedImage("graphics/rocket2.png")
+   rocket3 = newPaddedImage("graphics/rocket3.png")
+   spaceshuttle = newPaddedImage("graphics/spaceshuttle.png")
 
-   main.rocketbackground = newPaddedImage("graphics/rocketbackground.png")
-   main.bigrocketbackground = newPaddedImage("graphics/bigrocketbackground.png")
-   main.bigrockettakeoffbackground = newPaddedImage("graphics/bigrockettakeoffbackground.png")
+   rocketbackground = newPaddedImage("graphics/rocketbackground.png")
+   bigrocketbackground = newPaddedImage("graphics/bigrocketbackground.png")
+   bigrockettakeoffbackground = newPaddedImage("graphics/bigrockettakeoffbackground.png")
 
 
-   main.smoke1left = newPaddedImage("graphics/smoke1left.png")
-   main.smoke1right = newPaddedImage("graphics/smoke1right.png")
-   main.smoke2left = newPaddedImage("graphics/smoke2left.png")
-   main.smoke2right = newPaddedImage("graphics/smoke2right.png")
+   smoke1left = newPaddedImage("graphics/smoke1left.png")
+   smoke1right = newPaddedImage("graphics/smoke1right.png")
+   smoke2left = newPaddedImage("graphics/smoke2left.png")
+   smoke2right = newPaddedImage("graphics/smoke2right.png")
 
-   main.fire1 = newPaddedImage("graphics/fire1.png")
-   main.fire2 = newPaddedImage("graphics/fire2.png")
-   main.firebig1 = newPaddedImage("graphics/firebig1.png")
-   main.firebig2 = newPaddedImage("graphics/firebig2.png")
+   fire1 = newPaddedImage("graphics/fire1.png")
+   fire2 = newPaddedImage("graphics/fire2.png")
+   firebig1 = newPaddedImage("graphics/firebig1.png")
+   firebig2 = newPaddedImage("graphics/firebig2.png")
 
-   main.congratsline = newPaddedImage("graphics/congratsline.png")
+   congratsline = newPaddedImage("graphics/congratsline.png")
 
    ----nextpiece
-   main.nextpieceimg = {}
+   nextpieceimg = {}
    for i = 1, 7 do
-      --nextpieceimg[i] = newPaddedImage( "graphics/pieces/"..i..".png", scale )
-      main.nextpieceimg[i] = newPaddedImage( "graphics/pieces/"..i..".png" )
+      nextpieceimg[i] = newPaddedImage( "graphics/pieces/"..i..".png", scale )
    end
 
    ----font--
    ---- original
-   --tetrisfont = newPaddedImageFont("graphics/font.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<! ")
-   --whitefont = newPaddedImageFont("graphics/fontwhite.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<!+ ")
+   tetrisfont = newPaddedImageFont("graphics/font.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<! ")
+   whitefont = newPaddedImageFont("graphics/fontwhite.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<!+ ")
 --
    ---- modified font
-   --tetrisfont = love.graphics.newFont("graphics/font/Masaaki-Regular.ttf")
-   --whitefont = love.graphics.newFont("graphics/font/Masaaki-Regular.ttf")
-   --love.graphics.setFont(tetrisfont)
+   tetrisfont = love.graphics.newFont("graphics/font/Masaaki-Regular.ttf")
+   whitefont = love.graphics.newFont("graphics/font/Masaaki-Regular.ttf")
+   love.graphics.setFont(tetrisfont)
    --
    ----filters!
    --stabyourselflogo:setFilter("nearest", "nearest")
@@ -390,18 +338,14 @@ function loadimages()
    --firebig1:setFilter( "nearest", "nearest" )
    --firebig2:setFilter( "nearest", "nearest" )
    --congratsline:setFilter( "nearest", "nearest" )
-   gameA.loadMain(main, love)
-   menu.loadMain(main, love)
 end
 
-function main.update(dt)
-   if main.gamestate == nil then
+function love.update(dt)
+   if gamestate == nil then
       startdelaytime = startdelaytime + dt
       if startdelaytime >= startdelay then
          start()
       end
-   else
-      love.graphics.print( "gamstate main: " .. main.gamestate, 300, 60, 0, 1, 1)
    end
 
    if skipupdate then
@@ -413,45 +357,41 @@ function main.update(dt)
       dt = math.min(dt, minfps)
    end
    
-   if main.gamestate == "logo" or main.gamestate == "credits" or main.gamestate == "title" or main.gamestate == "menu" or main.gamestate == "multimenu" or main.gamestate == "highscoreentry" or main.gamestate == "options" then
+   if gamestate == "logo" or gamestate == "credits" or gamestate == "title" or gamestate == "menu" or gamestate == "multimenu" or gamestate == "highscoreentry" or gamestate == "options" then
       menu_update(dt)
-   elseif main.gamestate == "gameA" or main.gamestate == "failingA" then
-      if main.pause == false then
+   elseif gamestate == "gameA" or gamestate == "failingA" then
+      if pause == false then
          gameA_update(dt)
       end
-   elseif main.gamestate == "gameB" or main.gamestate == "failingB" then
-      if main.pause == false then
+   elseif gamestate == "gameB" or gamestate == "failingB" then
+      if pause == false then
          gameB_update(dt)
       end
-      elseif main.gamestate == "gameBmulti" or main.gamestate == "failingBmulti" or main.gamestate == "failedBmulti" or main.gamestate == "gameBmulti_results" then
+      elseif gamestate == "gameBmulti" or gamestate == "failingBmulti" or gamestate == "failedBmulti" or gamestate == "gameBmulti_results" then
       gameBmulti_update(dt)
-   elseif main.gamestate == "rocket1" or main.gamestate == "rocket2" or main.gamestate == "rocket3" or main.gamestate == "rocket4" then
+   elseif gamestate == "rocket1" or gamestate == "rocket2" or gamestate == "rocket3" or gamestate == "rocket4" then
       rocket_update()
    end
 end
 
-function main.draw()
-   if main.gamestate == "logo" or main.gamestate == "credits" or main.gamestate == "title" or main.gamestate == "menu" or main.gamestate == "multimenu" or main.gamestate == "highscoreentry" or main.gamestate == "options" then
+function love.draw()
+   if gamestate == "logo" or gamestate == "credits" or gamestate == "title" or gamestate == "menu" or gamestate == "multimenu" or gamestate == "highscoreentry" or gamestate == "options" then
       menu_draw()
-   elseif main.gamestate == "gameA" or main.gamestate == "failingA" then
+   elseif gamestate == "gameA" or gamestate == "failingA" then
       gameA_draw()
-   elseif main.gamestate == "gameB" or main.gamestate == "failingB" then
+   elseif gamestate == "gameB" or gamestate == "failingB" then
       gameB_draw()
-   elseif main.gamestate == "gameBmulti" or main.gamestate == "failingBmulti" or main.gamestate == "failedBmulti" or main.gamestate == "gameBmulti_results" then
+   elseif gamestate == "gameBmulti" or gamestate == "failingBmulti" or gamestate == "failedBmulti" or gamestate == "gameBmulti_results" then
       gameBmulti_draw()
-   elseif main.gamestate == "failed" then
+   elseif gamestate == "failed" then
       failed_draw()
-   elseif main.gamestate == "rocket1" or main.gamestate == "rocket2" or main.gamestate == "rocket3" or main.gamestate == "rocket4" then
+   elseif gamestate == "rocket1" or gamestate == "rocket2" or gamestate == "rocket3" or gamestate == "rocket4" then
       rocket_draw()
    end
 end
 
 function newImageData(path, s)
    local imagedata = love.image.newImageDataFromPath( path )
-   
-   if s then
-      imagedata = scaleImagedata(imagedata, s)
-   end
 
    local width, height = imagedata:getWidth(), imagedata:getHeight()
 
@@ -476,43 +416,32 @@ function newImageData(path, s)
          end
       end
    end
-   
+
+   -- Scaled last: the loop above walks the texture pixel by pixel, and a scaled
+   -- imagedata reports the enlarged size while the texture behind it stays the
+   -- size it was loaded at.
+   if s then
+      imagedata = scaleImagedata(imagedata, s)
+   end
+
    return imagedata
 end
 
+-- The power-of-two padding this used to do is a LOVE 0.7 texture requirement
+-- that vita2d does not have, so it is skipped on the Vita: it went through
+-- LoveImageData:paste, which cannot expand a source that is scaled on the GPU.
 function newPaddedImage(filename, s)
+   love.trace("image " .. filename)
    local source = newImageData(filename)
-   
+
    if s then
       source = scaleImagedata(source, s)
    end
-   local w, h = source:getWidth(), source:getHeight()
-    -- Find closest power-of-two.
-   local wp = math.pow(2, math.ceil(math.log(w)/math.log(2)))
-   local hp = math.pow(2, math.ceil(math.log(h)/math.log(2)))
-    -- Only pad if needed:
-   --if wp ~= w or hp ~= h then
-   --   local padded = love.image.newImageDataFromDimensions(wp, hp)
-   --   padded:paste(source, 0, 0)
-   --   return love.graphics.newImageFromImageData(padded)
-   --end
+
    return love.graphics.newImageFromImageData(source)
 end
 
 function padImagedata(source) --returns image, not imagedata!
-    local w, h = source:getWidth(), source:getHeight()
-   
-    -- Find closest power-of-two.
-    local wp = math.pow(2, math.ceil(math.log(w)/math.log(2)))
-    local hp = math.pow(2, math.ceil(math.log(h)/math.log(2)))
-   
-    -- Only pad if needed:
-    if wp ~= w or hp ~= h then
-        local padded = love.image.newImageDataFromDimensions(wp, hp)
-        padded:paste(source, 0, 0)
-        return love.graphics.newImageFromImageData(padded)
-    end
-   
     return love.graphics.newImageFromImageData(source)
 end
 
@@ -526,7 +455,7 @@ function newPaddedImageFont(filename, glyphs)
 
     -- Only pad if needed:
     if wp ~= w or hp ~= h then
-        local padded = newImageData(wp, hp)
+        local padded = love.image.newImageData(wp, hp)
         padded:paste(source, 0, 0)
       local image = love.graphics.newImageFromImageData(padded)
       image:setFilter("nearest", "nearest")
@@ -536,42 +465,39 @@ function newPaddedImageFont(filename, glyphs)
     return love.graphics.newImageFont(source, glyphs)
 end
 
+-- Nearest-neighbour upscale of the piece graphics. The original copied every
+-- pixel in Lua; on the Vita the factor is handed to the GPU at draw time
+-- instead, so this stays a constant-time call no matter how large the scale is.
 function scaleImagedata(imagedata, i)
-   local width, height = imagedata:getWidth(), imagedata:getHeight()
-   local scaled = love.image.newImageDataFromDimensions(width*i, height*i)
-   
-   for y = 0, height*i-1 do
-      for x = 0, width*i-1 do
-         local r, g, b, a = imagedata:getPixel(math.floor(x/i), math.floor(y/i))
-         scaled:setPixel(x, y, r, g, b, a)
-      end
+   if i == nil or i == 1 then
+      return imagedata
    end
-   
-   return scaled
+
+   return love.image.scaledImageData(imagedata, i)
 end
 
 function changevolume(i)
-   main.music[1]:setVolume( 0.6*i )
-   main.music[2]:setVolume( 0.6*i )
-   main.music[3]:setVolume( 0.6*i )
-   main.musictitle:setVolume( 0.6*i )
-   main.musichighscore:setVolume( 0.6*i )
-   main.musicrocket4:setVolume( 0.6*i )
-   main.musicrocket1to3:setVolume( 0.6*i )
-   main.musicresults:setVolume( i )
-   main.highscoreintro:setVolume( 0.6*i )
-   main.musicoptions:setVolume( i )
-   main.boot:setVolume( i )
-   main.blockfall:setVolume( i )
-   main.blockturn:setVolume( i )
-   main.blockmove:setVolume( i )
-   main.lineclear:setVolume( i )
-   main.fourlineclear:setVolume( i )
-   main.gameover1:setVolume( i )
-   main.gameover2:setVolume( i )
-   main.pausesound:setVolume( i )
-   main.highscorebeep:setVolume( i )
-   main.newlevel:setVolume( 0.6*i )
+   music[1]:setVolume( 0.6*i )
+   music[2]:setVolume( 0.6*i )
+   music[3]:setVolume( 0.6*i )
+   musictitle:setVolume( 0.6*i )
+   musichighscore:setVolume( 0.6*i )
+   musicrocket4:setVolume( 0.6*i )
+   musicrocket1to3:setVolume( 0.6*i )
+   musicresults:setVolume( i )
+   highscoreintro:setVolume( 0.6*i )
+   musicoptions:setVolume( i )
+   boot:setVolume( i )
+   blockfall:setVolume( i )
+   blockturn:setVolume( i )
+   blockmove:setVolume( i )
+   lineclear:setVolume( i )
+   fourlineclear:setVolume( i )
+   gameover1:setVolume( i )
+   gameover2:setVolume( i )
+   pausesound:setVolume( i )
+   highscorebeep:setVolume( i )
+   newlevel:setVolume( 0.6*i )
 end
 
 function loadoptions()
@@ -668,9 +594,10 @@ function togglefullscreen(fullscr)
       
       scale = maxscale
       physicsscale = scale/4
-      
-      fullscreenoffsetX = (desktopwidth-160*scale)/2
-      fullscreenoffsetY = (desktopheight-144*scale)/2
+
+      -- no letterboxing: the wrapper stretches the canvas over the whole Vita screen
+      fullscreenoffsetX = 0
+      fullscreenoffsetY = 0
    end
 end
 
@@ -835,50 +762,50 @@ function getrainbowcolor(i)
 end
 
 -- TODO: Either remove any code that expects keyboard text input or use vita touch keyboard
-function main.keypressed( key )
-   if main.gamestate == nil then
+function love.keypressed( key )
+   if gamestate == nil then
       if controls.check("return", key) then
-         main.gamestate = "title"
+         gamestate = "title"
          love.graphics.setBackgroundColor( 0, 0, 0)
-         love.audio.play(main.musictitle)
+         love.audio.play(musictitle)
          oldtime = love.timer.getTime()
       end
       
-   elseif main.gamestate == "logo" then
+   elseif gamestate == "logo" then
       if controls.check("return", key) then
-         main.gamestate = "title"
+         gamestate = "title"
          love.graphics.setBackgroundColor( 0, 0, 0)
-         love.audio.play(main.musictitle)
+         love.audio.play(musictitle)
          oldtime = love.timer.getTime()
       end
       
-   elseif main.gamestate == "credits" then
+   elseif gamestate == "credits" then
       if controls.check("return", key) then
-         main.gamestate = "title"
+         gamestate = "title"
          love.graphics.setBackgroundColor( 0, 0, 0)
-         love.audio.play(main.musictitle)
+         love.audio.play(musictitle)
          oldtime = love.timer.getTime()
       end
       
-   elseif main.gamestate == "title" then
+   elseif gamestate == "title" then
       if controls.check("return", key) then
          if playerselection ~= 3 then
             if soundenabled then
-               love.audio.stop(main.musictitle)
+               love.audio.stop(musictitle)
                if musicno < 4 then
-                  love.audio.play(main.music[musicno])
+                  love.audio.play(music[musicno])
                end
             end
          end
          if playerselection == 1 then
-            main.gamestate = "menu"
+            gamestate = "menu"
          elseif playerselection == 2 then
-            main.gamestate = "multimenu"
+            gamestate = "multimenu"
          else
-            main.gamestate = "options"
+            gamestate = "options"
             if soundenabled then
-            love.audio.stop(main.musictitle)
-            love.audio.play(main.musicoptions)
+            love.audio.stop(musictitle)
+            love.audio.play(musicoptions)
             end
             optionsselection = 1
          end
@@ -890,16 +817,16 @@ function main.keypressed( key )
          playerselection = playerselection + 1
       end
       
-   elseif main.gamestate == "menu" then   
+   elseif gamestate == "menu" then   
       oldmusicno = musicno
       if controls.check("escape", key) then
          if musicno < 4 then
-            love.audio.stop(main.music[musicno])
+            love.audio.stop(music[musicno])
          end
-         main.gamestate = "title"
+         gamestate = "title"
          if soundenabled then
-         love.audio.stop(main.musictitle)
-         love.audio.play(main.musictitle)
+         love.audio.stop(musictitle)
+         love.audio.play(musictitle)
          end
       elseif key == "backspace" then
          newhighscores()
@@ -958,23 +885,23 @@ function main.keypressed( key )
             love.audio.stop(music[oldmusicno])
          end
          if musicno < 4 then
-            love.audio.play(main.music[musicno])
+            love.audio.play(music[musicno])
          end
       elseif not controls.check("escape", key) then
          gameno = selection
          loadhighscores()
       end
    
-   elseif main.gamestate == "options" then
+   elseif gamestate == "options" then
       if controls.check("escape", key) then
          if soundenabled then
-            love.audio.stop(main.musicoptions)
-            love.audio.stop(main.musictitle)
-            love.audio.play(main.musictitle)
+            love.audio.stop(musicoptions)
+            love.audio.stop(musictitle)
+            love.audio.play(musictitle)
          end
          saveoptions()
          loadimages()
-         main.gamestate = "title"
+         gamestate = "title"
       elseif controls.check("down", key) then
          optionsselection = optionsselection + 1
          if optionsselection > #optionschoices then
@@ -1061,15 +988,15 @@ function main.keypressed( key )
          
       end
    
-   elseif main.gamestate == "multimenu" then   
+   elseif gamestate == "multimenu" then   
       oldmusicno = musicno
       if controls.check("escape", key) then
          if musicno < 4 then
-            love.audio.stop(main.music[musicno])
+            love.audio.stop(music[musicno])
          end
-         main.gamestate = "title"
-         love.audio.stop(main.musictitle)
-         love.audio.play(main.musictitle)
+         gamestate = "title"
+         love.audio.stop(musictitle)
+         love.audio.play(musictitle)
       elseif controls.check("return", key) then
          gameBmulti_load()
       elseif controls.check("left", key) then
@@ -1121,37 +1048,37 @@ function main.keypressed( key )
             love.audio.stop(music[oldmusicno])
          end
          if musicno < 4 then
-            love.audio.play(main.music[musicno])
+            love.audio.play(music[musicno])
          end
       elseif not controls.check("return", key) and not controls.check("escape", key) then
          gameno = selection
          loadhighscores()
       end
          
-   elseif main.gamestate == "gameA" or main.gamestate == "gameB" or main.gamestate == "failingA" or main.gamestate == "failingB" then
+   elseif gamestate == "gameA" or gamestate == "gameB" or gamestate == "failingA" or gamestate == "failingB" then
 
       if controls.check("return", key) then
-         main.pause = not main.pause
+         pause = not pause
 
-         if main.pause == true then
+         if pause == true then
             if musicno < 4 then
-               love.audio.pause(main.music[musicno])
+               love.audio.pause(music[musicno])
             end
-            love.audio.stop(main.pausesound)
-            love.audio.play(main.pausesound)
+            love.audio.stop(pausesound)
+            love.audio.play(pausesound)
          else
             if musicno < 4 then
-               love.audio.resume(main.music[musicno])
+               love.audio.resume(music[musicno])
             end
          end
       end
-      if main.gamestate == "gameA" or main.gamestate == "gameB" then
+      if gamestate == "gameA" or gamestate == "gameB" then
          if controls.check("escape", key) then
             oldtime = love.timer.getTime()
-            main.gamestate = "menu"
+            gamestate = "menu"
          end
          
-         if main.pause == false and (cuttingtimer == lineclearduration or main.gamestate == "gameB") then
+         if pause == false and (cuttingtimer == lineclearduration or gamestate == "gameB") then
             --if key == "up" then --STOP ROTATION OF BLOCK (makes it too easy..)
             --   tetribodies[counter]:setAngularVelocity(0)
             --end
@@ -1164,22 +1091,22 @@ function main.keypressed( key )
             end
          end
       end
-   elseif main.gamestate == "gameBmulti" and gamestarted == false then
+   elseif gamestate == "gameBmulti" and gamestarted == false then
       if controls.check("escape", key) then
          if not fullscreen then
             love.graphics.setMode( 160*scale, 144*scale, false, vsync, 0 )
          end
-         main.gamestate = "multimenu"
+         gamestate = "multimenu"
          if musicno < 4 then
-            love.audio.play(main.music[musicno])
+            love.audio.play(music[musicno])
          end
       end
-   elseif main.gamestate == "gameBmulti" and gamestarted == true then
+   elseif gamestate == "gameBmulti" and gamestarted == true then
       if controls.check("escape", key) then
          if not fullscreen then
             love.graphics.setMode( 160*scale, 144*scale, false, vsync, 0 )
          end
-         main.gamestate = "multimenu"
+         gamestate = "multimenu"
       end
       if controls.check("left", key) or controls.check("right", key) or controls.check("leftp2", key) or controls.check("rightp2", key) then
          love.audio.stop(blockmove)
@@ -1189,34 +1116,34 @@ function main.keypressed( key )
          love.audio.play(blockturn)
       end
       
-   elseif main.gamestate == "gameBmulti_results" then
+   elseif gamestate == "gameBmulti_results" then
       if controls.check("return", key) or controls.check("escape", key) then
          if musicno < 4 then
-            love.audio.stop(main.musicresults)
-            love.audio.play(main.music[musicno])
+            love.audio.stop(musicresults)
+            love.audio.play(music[musicno])
          end
          if not fullscreen then
             love.graphics.setMode( 160*scale, 144*scale, false, vsync, 0 )
          end
-         main.gamestate = "multimenu"
+         gamestate = "multimenu"
       end
       
-   elseif main.gamestate == "failed" then
+   elseif gamestate == "failed" then
       if controls.check("return", key) or controls.check("escape", key) then 
          love.audio.stop(gameover2)
          rocket_load()
       end
-   elseif main.gamestate == "highscoreentry" then
+   elseif gamestate == "highscoreentry" then
       if controls.check("return", key) then
-         main.gamestate = "menu"
+         gamestate = "menu"
          savehighscores()
          if musicchanged == true then
-            love.audio.stop(main.musichighscore)
+            love.audio.stop(musichighscore)
          else
-            love.audio.stop(main.highscoreintro)
+            love.audio.stop(highscoreintro)
          end
          if musicno < 4 then
-            love.audio.play(main.music[musicno])
+            love.audio.play(music[musicno])
          end
       elseif key == "backspace" then
          if highscorename[highscoreno]:len() > 0 then
@@ -1224,13 +1151,11 @@ function main.keypressed( key )
             highscorename[highscoreno] = string.sub(highscorename[highscoreno], 1, highscorename[highscoreno]:len()-1)
          end
       end
-   elseif string.sub(main.gamestate, 1, 6) == "rocket" then
+   elseif string.sub(gamestate, 1, 6) == "rocket" then
       if controls.check("return", key) then
-         love.audio.stop(main.musicrocket1to3)
-         main.love.audio.stop(main.musicrocket4)
+         love.audio.stop(musicrocket1to3)
+         love.audio.stop(musicrocket4)
          failed_checkhighscores()
       end
    end
 end
-
-return main
