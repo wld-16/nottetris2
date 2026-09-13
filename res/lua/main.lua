@@ -1,17 +1,77 @@
-main = {
-   love = {}
+local love = require "love"
+local menu = require "menu"
+local gameA = require "gameA"
+
+local main = {
+   gamestate = "logo",
+   boot = {},
+   musictitle = {},
+   stabyourselflogo = {},
+   logo = {},
+   title = {},
+   blockfall = {},
+   blockturn = {},
+   blockmove = {},
+   lineclear = {},
+   fourlineclear = {},
+   gameover1 = {},
+   gameover2 = {},
+   pausesound = {},
+   highscorebeep = {},
+   newlevel = {},
+   rainbowgradient = {},
+   gametype = {},
+   mpmenu = {},
+   optionsmenu = {},
+   volumeslider = {},
+   gamebackground = {},
+   gamebackgroundcutoff = {},
+   gamebackgroundmulti = {},
+   multiresults = {},
+   number1 = {},
+   number2 = {},
+   number3 = {},
+   gameover = {},
+   gameovercutoff = {},
+   pausegraphic = {},
+   pausegraphiccutoff = {},
+   marioidle = {},
+   mariojump = {},
+   mariocry1 = {},
+   mariocry2 = {},
+   luigiidle = {},
+   luigijump = {},
+   luigicry1 = {},
+   luigicry2 = {},
+   rocket1 = {},
+   rocket2 = {},
+   rocket3 = {},
+   spaceshuttle = {},
+   rocketbackground = {},
+   bigrocketbackground = {},
+   bigrockettakeoffbackground = {},
+   smoke1left = {},
+   smoke1right = {},
+   smoke2left = {},
+   smoke2right = {},
+   fire1 = {},
+   fire2 = {},
+   firebig1 = {},
+   firebig2 = {},
+   congratsline = {},
+   nextpieceimg = {},
+   music = {},
 }
 
 function main.load()
+     require "gameB"
+     require "gameBmulti"
+     require "controls"
+     require "menu"
+     require "failed"
+     require "rocket"
    --requires--
    love.trace("dofile controls/menu/failed/rocket")
-   dofile("ux0:/data/lpp-vita/samples/nottetris2/controls.lua")
-   dofile("ux0:/data/lpp-vita/samples/nottetris2/gameB.lua")
-   dofile("ux0:/data/lpp-vita/samples/nottetris2/gameBmulti.lua")
-   dofile("ux0:/data/lpp-vita/samples/nottetris2/gameA.lua")
-   dofile("ux0:/data/lpp-vita/samples/nottetris2/menu.lua")
-   dofile("ux0:/data/lpp-vita/samples/nottetris2/failed.lua")
-   dofile("ux0:/data/lpp-vita/samples/nottetris2/rocket.lua")
    
    vsync = true
 
@@ -288,13 +348,13 @@ function loadimages()
 
    ----font--
    ---- original
-   tetrisfont = newPaddedImageFont("graphics/font.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<! ")
-   whitefont = newPaddedImageFont("graphics/fontwhite.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<!+ ")
+   -- tetrisfont = newPaddedImageFont("graphics/font.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<! ")
+   -- whitefont = newPaddedImageFont("graphics/fontwhite.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<!+ ")
 --
    ---- modified font
-   tetrisfont = love.graphics.newFont("graphics/font/Masaaki-Regular.ttf")
-   whitefont = love.graphics.newFont("graphics/font/Masaaki-Regular.ttf")
-   love.graphics.setFont(tetrisfont)
+   -- tetrisfont = love.graphics.newFont("graphics/font/Masaaki-Regular.ttf")
+   -- whitefont = love.graphics.newFont("graphics/font/Masaaki-Regular.ttf")
+   -- love.graphics.setFont(tetrisfont)
    --
    ----filters!
    --stabyourselflogo:setFilter("nearest", "nearest")
@@ -456,7 +516,7 @@ function newPaddedImageFont(filename, glyphs)
     -- Only pad if needed:
     if wp ~= w or hp ~= h then
         local padded = love.image.newImageData(wp, hp)
-        padded:paste(source, 0, 0)
+        padded:paste(source, 1, 1)
       local image = love.graphics.newImageFromImageData(padded)
       image:setFilter("nearest", "nearest")
         return love.graphics.newImageFont(image, glyphs)
@@ -1159,3 +1219,5 @@ function love.keypressed( key )
       end
    end
 end
+
+return main

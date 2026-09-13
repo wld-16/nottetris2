@@ -2,7 +2,7 @@ local loveBody = {
     id = 0
 }
 
-function loveEnvironment:new(o)
+function loveBody:new(o)
     o = o or {}
     setmetatable(o, self)
     self.__index = self
@@ -10,4 +10,4 @@ function loveEnvironment:new(o)
     return o
 end
 
-return loveEnvironment
+return loveBody

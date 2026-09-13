@@ -6,6 +6,12 @@
 -- To change this template use File | Settings | File Templates.
 --
 
+package.path = "app0:/?.lua;" .. package.path
+package.path = "app0:/wrapper/?.lua;" .. package.path
+
+local love = require "love"
+local main = require "main"
+
 -- Load
 local white = Color.new(255,255,255)
 Graphics.initBlend()
@@ -86,7 +92,6 @@ end
 -- the process outright (native image/font loaders do) still names itself.
 local function boot()
     love.trace("loading main.lua")
-    dofile("ux0:/data/lpp-vita/samples/nottetris2/main.lua")
 
     volume = 1
     hue = 0.08

@@ -1,6 +1,6 @@
 local menu = {}
 local love = {}
-local main = 0
+local main = {}
 local logotime = 0
 local creditstext = {}
 local bootsoundplayed = false

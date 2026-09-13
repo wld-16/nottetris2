@@ -6,8 +6,7 @@
 -- To change this template use File | Settings | File Templates.
 --
 
-
-LoveImageData = {
+local loveImageData = {
     id = 0,
     height = 0,
     width = 0
@@ -16,7 +15,7 @@ LoveImageData = {
 -- Fields go on the instance, not on `self`: assigning through `self` here writes
 -- them onto the LoveImageData class itself, so every image would overwrite the
 -- id, width and height seen by all the others.
-function LoveImageData:create(o)
+function loveImageData:new(o)
     o = o or {}
     setmetatable(o, self)
     self.__index = self
@@ -27,45 +26,48 @@ function LoveImageData:create(o)
     return o
 end
 
-function LoveImageData:setFilter (filterWidth, filterHeigth)
+function loveImageData:setFilter(filterWidth, filterHeigth)
     self.filterWidth = filterWidth
     self.filterHeigth = filterHeigth
 end
 
+function loveImageData:getId()
+    return self.id
+end
 
-function LoveImageData:getHeight()
+
+function loveImageData:getHeight()
     return self.height
 end
 
-function LoveImageData:getWidth()
+function loveImageData:getWidth()
     return self.width
 end
 
-function LoveImageData:getPixel(x, y)
+function loveImageData:getPixel(x, y)
     return Graphics.getPixel(x, y, self.id)
 end
 
-function LoveImageData:setPixel(x, y, r, g, b, a)
+function loveImageData:setPixel(x, y, r, g, b, a)
     Graphics.drawPixel(x,y,Color.new(r, g, b),self.id)
 end
 
 
 -- TODO: There might occur bugs here
-function LoveImageData:paste(imageData, x, y)
-    love.graphics.print(
-      x .. " x\n" .. y .. " y\n" ..
-      imageData.width .. " from width\n" ..
-      imageData.height .. " from height\n" ..
-      LoveImageData.width .. " to width\n" ..
-      LoveImageData.height .. " to height\n", 20, 120, 0, 1, 1)
-    for index_y = y,imageData.height,1
-    do
-        for index_x = x,imageData.width,1
-        do
-            Graphics.drawPixel(index_x,index_y, Graphics.getPixel(x,y,imageData.id),LoveImageData.id)
-        end
-    end
+function loveImageData:paste(imageData, x, y)
+    color = Graphics.getPixel(x, y, imageData:getId())
+    Graphics.drawPixel(x, y, color, self.id)
+    -- for index_y = y, imageData:getHeight(), 1
+    -- do
+    --    for index_x = x, imageData:getWidth(), 1
+    --    do
+    --         color = Graphics.getPixel(x, y, imageData:getId())
+    --         Graphics.drawPixel(index_x, index_y, color, self.id)
+    --     end
+    -- end
 end
+
+return loveImageData
 
 
 

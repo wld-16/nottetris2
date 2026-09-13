@@ -6,11 +6,11 @@
 -- To change this template use File | Settings | File Templates.
 --
 
-dofile("ux0:/data/lpp-vita/samples/nottetris2/wrapper/loveSound.lua")
-dofile("ux0:/data/lpp-vita/samples/nottetris2/wrapper/loveImage.lua")
-dofile("ux0:/data/lpp-vita/samples/nottetris2/wrapper/loveImageData.lua")
-dofile("ux0:/data/lpp-vita/samples/nottetris2/wrapper/loveEnvironment.lua")
-dofile("ux0:/data/lpp-vita/samples/nottetris2/wrapper/loveFont.lua")
+local loveSound = require "loveSound"
+local loveImage = require "loveImage"
+local loveImageData = require "loveImageData"
+local loveEnvironment = require "loveEnvironment"
+local loveFont = require "loveFont"
 
 -- Where the game's files live on the Vita
 GAME_ROOT = "ux0:/data/lpp-vita/samples/nottetris2/"
@@ -23,7 +23,7 @@ SCREEN_HEIGHT = 544
 GAME_WIDTH = 160
 GAME_HEIGHT = 144
 
-love = {
+local love = {
     graphics = {},
     filesystem = {},
     mouse = {},
@@ -41,7 +41,7 @@ function love.init()
     -- Sound.init starts lpp-vita's audio threads. Without it every Sound.play
     -- finds no free thread and returns silently, so nothing is ever audible.
     Sound.init()
-    love.env = LoveEnvironment:create({id = 0, backgroundColor = Color.new(0,0,0,0), activeFont = 0, timer = Timer.new()})
+    love.env = loveEnvironment:new({id = 0, backgroundColor = Color.new(0,0,0,0), activeFont = 0, timer = Timer.new()})
 end
 
 -- Every Graphics call has to sit between initBlend/termBlend, and starting a
@@ -269,15 +269,15 @@ end
 
 function love.audio.newSource(filePath, type)
     local soundId = Sound.open(love.filesystem.assetPath(filePath))
-    return LoveSound:create({id = soundId, volume = 0, isLooping = false})
+    return loveSound:new({id = soundId, volume = 0, isLooping = false})
 end
 
 function love.graphics.newImageFromFile(filePath)
-    return LoveImage:create({id = Graphics.loadImage(love.filesystem.assetPath(filePath)), filterWidth = "", filterHeight = ""})
+    return loveImage:new({id = Graphics.loadImage(love.filesystem.assetPath(filePath)), filterWidth = "", filterHeight = ""})
 end
 
 function love.graphics.newImageFromImageData(imageData)
-    return LoveImage:create({
+    return loveImage:new({
         id = imageData.id,
         filterWidth = "",
         filterHeight = "",
@@ -294,25 +294,24 @@ function love.image.newImageDataFromPath(filePath)
     local graphics_width = Graphics.getImageWidth(graphicsId)
     local graphics_height = Graphics.getImageHeight(graphicsId)
 
-    return LoveImageData:create({id = graphicsId, width = graphics_width, height = graphics_height})
+    return loveImageData:new({id = graphicsId, width = graphics_width, height = graphics_height})
 end
 
 function love.image.newImageDataFromDimensions(image_width, image_height)
     local graphicsId = Graphics.createImage(image_width, image_height, Color.new(0, 0, 0, 0))
-    return LoveImageData:create({id = graphicsId, width = image_width, height = image_height})
+    return loveImageData:new({id = graphicsId, width = image_width, height = image_height})
 end
 
-function love.image.newImageData(image_width, image_height) {
-
-}
-}
+function love.image.newImageData(image_width, image_height)
+    return loveImageData:new({width = image_width, heigth = image_height})
+end
 
 -- An upscaled copy of `imageData`. vita2d scales textures on the GPU when they
 -- are drawn, so the factor is recorded on the image rather than baked into a new
 -- texture: no pixel copying, no second allocation. love.graphics.draw multiplies
 -- by it, and getWidth/getHeight report the scaled size the game expects.
 function love.image.scaledImageData(imageData, factor)
-    return LoveImageData:create({
+    return loveImageData:new({
         id = imageData.id,
         width = imageData.width * factor,
         height = imageData.height * factor,
@@ -321,7 +320,12 @@ function love.image.scaledImageData(imageData, factor)
 end
 
 function love.graphics.newFont(fontPath)
-    return LoveFont:create({ id = Font.load(love.filesystem.assetPath(fontPath))})
+    love.trace(fontPath)
+    local assetPath = love.filesystem.assetPath(fontPath)
+    love.trace(assetPath)
+    local fontId = Font.load(assetPath)
+    love.trace(fontId)
+    return loveFont:new({ id = fontId})
 end
 
 function love.graphics.setFont(font)
@@ -416,3 +420,5 @@ function love.graphics.print( text, x, y, r, scale_x, scale_y)
         text, Color.new(0, 255, 255))
     love.endBlend()
 end
+
+return love

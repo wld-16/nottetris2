@@ -95,6 +95,4 @@ curl -T sounds/themeC.ogg ftp://192.168.178.25:1337/ux0:data/lpp-vita/samples/no
 curl -T sounds/titlemusic.ogg ftp://192.168.178.25:1337/ux0:data/lpp-vita/samples/nottetris2/sounds/
 curl -T sounds/turn.ogg ftp://192.168.178.25:1337/ux0:data/lpp-vita/samples/nottetris2/sounds/
 
-
-
-
+curl -T cmake-build-target/nottetris2.vpk ftp://192.168.178.25:1337/ux0:data/
