@@ -46,7 +46,7 @@
 #define NSAMPLES       2048 // Number of samples for output
 #define AUDIO_CHANNELS 8    // PSVITA has 8 available MAIN audio channels
 
-SceUID AudioThreads[AUDIO_CHANNELS], MicThread, Audio_Mutex, NewTrack_Mutex;
+SceUID AudioThreads[AUDIO_CHANNELS], Audio_Mutex, NewTrack_Mutex;
 DecodedMusic* new_track = NULL;
 static bool initialized = false;
 static bool mpg123_inited = false;
@@ -290,6 +290,19 @@ static int lua_closesong(lua_State *L) {
 }
 
 static int lua_pause(lua_State *L){
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 1)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	DecodedMusic* mus = (DecodedMusic*)luaL_checkinteger(L, 1);
+	if (mus->isPlaying) mus->pauseTrigger = true;
+
+	return 0;
+}
+
+static int lua_stop(lua_State *L)
+{
 	int argc = lua_gettop(L);
 #ifndef SKIP_ERROR_HANDLING
 	if (argc != 1)
@@ -596,6 +609,7 @@ static const luaL_Reg Sound_functions[] = {
 	{"getTitle",     lua_getTitle},
 	{"getAuthor",    lua_getAuthor},
 	{"pause",        lua_pause},
+	{"stop",         lua_stop},
 	{"resume",       lua_resume},
 	{"isPlaying",    lua_isplaying},
 	{"close",        lua_closesong},

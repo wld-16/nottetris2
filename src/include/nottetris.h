@@ -3,6 +3,8 @@
 
 #include <luajit-2.1/lua.hpp>
 #include <cstdio>
+#include <unordered_map>
+#include <map>
 #include <vita2d.h>
 
 void luaControls_init(lua_State *L);
@@ -26,6 +28,23 @@ extern int clr_color;
 extern bool keyboardStarted;
 extern bool messageStarted;
 extern bool unsafe_mode;
+
+struct bitmap_glyph {
+    int id;
+    unsigned int x, y;         // Position auf der PNG-Textur
+    unsigned int width, height;// Dimensionen des Zeichens
+    unsigned int xoffset;      // Versatz beim Zeichnen auf der X-Achse
+    unsigned int yoffset;      // Versatz beim Zeichnen auf der Y-Achse
+    unsigned int xadvance;     // Wie weit der Cursor nach diesem Zeichen springt
+};
+
+struct bitmap_font {
+    uint32_t magic;
+    vita2d_texture* texture;
+    unsigned int line_height;
+    unsigned int base_height;
+    std::unordered_map<char, bitmap_glyph> glyphs;
+};
 
 // Internal structs
 struct texture{

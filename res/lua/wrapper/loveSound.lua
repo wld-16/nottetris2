@@ -9,7 +9,8 @@
 local loveSound = {
 	id = 0,
 	volume = 0,
-	isLooping = false
+	isLooping = false,
+	name = ""
 }
 
 function loveSound:new(o)
@@ -19,11 +20,13 @@ function loveSound:new(o)
 	self.id = o.id
 	self.volume = o.volume
 	self.isLooping = o.isLooping
+	self.name = o.name
 	return o
 end
 
 function loveSound:setVolume (volume)
-	self.volume = volume
+    self.volume = volume
+	Sound.setVolume(self.id, volume * 32767)
 end
 
 function loveSound:setLooping (isLooping)

@@ -5,7 +5,6 @@ local logotime = 0
 local creditstext = {}
 local bootsoundplayed = false
 local oldtime = 0
-local scale = 1
 
 function menu.loadMain(mainInstance, loveInstance)
     main = mainInstance
@@ -61,14 +60,14 @@ function menu_draw()
         love.graphics.draw(main.logo, 32*scale, 80*scale, 0, scale, scale, 0, 0)
         ------------------------------------------
 
-    elseif main.gamestate == "title" then----------
+    elseif main.gamestate == "title" then ----------
         love.graphics.draw(main.title, 0, 0, 0, scale, scale, 0,0)
-        if playerselection == 1 then
-            love.graphics.print(">", 1*scale, 124*scale, 0, scale)
-        elseif playerselection == 2 then
-            love.graphics.print(">", 47*scale, 124*scale, 0, scale)
+        if main.playerselection == 1 then
+            love.graphics.print(">", 1*scale, 124*scale, 0, scale, scale)
+        elseif main.playerselection == 2 then
+            love.graphics.print(">", 47*scale, 124*scale, 0, scale, scale)
         else
-            love.graphics.print(">", 93*scale, 124*scale, 0, scale)
+            love.graphics.print(">", 93*scale, 124*scale, 0, scale, scale)
         end
         ------------------------------------------
 
@@ -81,11 +80,11 @@ function menu_draw()
                 love.graphics.print( "stack ", 88*scale, 26*scale, 0, scale)
             end
         else
-            if musicno == 1 then
+            if main.musicno == 1 then
                 love.graphics.print( "a-type", 24*scale, 60*scale, 0, scale)
-            elseif musicno == 2 then
+            elseif main.musicno == 2 then
                 love.graphics.print( "b-type", 88*scale, 60*scale, 0, scale)
-            elseif musicno == 3 then
+            elseif main.musicno == 3 then
                 love.graphics.print( "c-type", 24*scale, 76*scale, 0, scale)
             else
                 love.graphics.print( " off  ", 88*scale, 76*scale, 0, scale)
@@ -118,11 +117,11 @@ function menu_draw()
                 love.graphics.print( "invade", 88*scale, 47*scale, 0, scale)
             end
         else
-            if musicno == 1 then
+            if main.musicno == 1 then
                 love.graphics.print( "a-type", 24*scale, 81*scale, 0, scale)
-            elseif musicno == 2 then
+            elseif main.musicno == 2 then
                 love.graphics.print( "b-type", 88*scale, 81*scale, 0, scale)
-            elseif musicno == 3 then
+            elseif main.musicno == 3 then
                 love.graphics.print( "c-type", 24*scale, 97*scale, 0, scale)
             else
                 love.graphics.print( " off  ", 88*scale, 97*scale, 0, scale)
@@ -251,7 +250,7 @@ function menu_update(dt)
         if currenttime - oldtime > creditsdelay then
             main.gamestate = "title"
             love.graphics.setBackgroundColor( 0, 0, 0)
-            love.audio.play(main.musictitle)
+            love.audio.resume(main.musictitle)
         end
     end
 

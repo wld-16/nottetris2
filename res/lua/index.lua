@@ -12,6 +12,7 @@ package.path = "app0:/wrapper/?.lua;" .. package.path
 local love = require "love"
 local main = require "main"
 
+
 -- Load
 local white = Color.new(255,255,255)
 Graphics.initBlend()
@@ -33,7 +34,7 @@ local function showFatal(message)
     end
 end
 
-local wrapperLoaded, wrapperError = pcall(dofile, "ux0:/data/lpp-vita/samples/nottetris2/wrapper/love.lua")
+local wrapperLoaded, wrapperError = pcall(dofile, "app0:/wrapper/love.lua")
 if not wrapperLoaded then
     showFatal(wrapperError)
 end
@@ -97,19 +98,12 @@ local function boot()
     hue = 0.08
     scale = suggestedscale
     fullscreen = true
-    -- Left nil on purpose: love.update starts the game through start() -> menu_load()
-    -- once the state is nil, and that is what fills in logotime, oldtime and the
-    -- credits text. Setting it to "logo" here skipped menu_load, so the very first
-    -- menu_update did arithmetic on a nil logotime.
     gamestate = nil
 
 
     love.trace("love.init")
     love.init()
 
-    love.trace("loading font")
-    tetrisfont = love.graphics.newFont("graphics/font/Masaaki-Regular.ttf")
-    love.graphics.setFont(tetrisfont)
 
     love.trace("main.load")
     main.load()

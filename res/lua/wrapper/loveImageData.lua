@@ -26,9 +26,9 @@ function loveImageData:new(o)
     return o
 end
 
-function loveImageData:setFilter(filterWidth, filterHeigth)
+function loveImageData:setFilter(filterWidth, filterHeight)
     self.filterWidth = filterWidth
-    self.filterHeigth = filterHeigth
+    self.filterHeight = filterHeight
 end
 
 function loveImageData:getId()
@@ -55,16 +55,14 @@ end
 
 -- TODO: There might occur bugs here
 function loveImageData:paste(imageData, x, y)
-    color = Graphics.getPixel(x, y, imageData:getId())
-    Graphics.drawPixel(x, y, color, self.id)
-    -- for index_y = y, imageData:getHeight(), 1
-    -- do
-    --    for index_x = x, imageData:getWidth(), 1
-    --    do
-    --         color = Graphics.getPixel(x, y, imageData:getId())
-    --         Graphics.drawPixel(index_x, index_y, color, self.id)
-    --     end
-    -- end
+    for index_y = y, imageData:getHeight(), 1
+    do
+       for index_x = x, imageData:getWidth(), 1
+       do
+            local color = Graphics.getPixel(index_x, index_y, imageData:getId())
+            Graphics.drawPixel(index_x, index_y, color, self.id)
+        end
+    end
 end
 
 return loveImageData

@@ -23,6 +23,18 @@ SCREEN_HEIGHT = 544
 GAME_WIDTH = 160
 GAME_HEIGHT = 144
 
+local BUTTON_KEYS = {
+    {"up", SCE_CTRL_UP},
+    {"down", SCE_CTRL_DOWN},
+    {"left", SCE_CTRL_LEFT},
+    {"right", SCE_CTRL_RIGHT},
+    {"return", SCE_CTRL_START},
+    {"escape", SCE_CTRL_SELECT},
+    {"y", SCE_CTRL_LTRIGGER},
+    {"x", SCE_CTRL_RTRIGGER}
+}
+
+
 local love = {
     graphics = {},
     filesystem = {},
@@ -33,6 +45,7 @@ local love = {
     timer = {},
     coordinateSystemTranslation = {x = 0, y = 0},
     scissor = { x = 0, y = 0, width = SCREEN_WIDTH, height = SCREEN_HEIGHT },
+    event = {},
     keyboard = {},
     textCount = 1
 }
@@ -68,7 +81,7 @@ function love.endBlend()
 end
 
 -- Rough character metrics of the debug font, used to lay the error screen out.
-ERROR_LINE_HEIGHT = 20
+ERROR_LINE_HEIGHT = 200
 ERROR_CHARACTERS_PER_LINE = 100
 ERROR_LOG_PATH = GAME_ROOT .. "error.log"
 TRACE_LOG_PATH = GAME_ROOT .. "trace.log"
@@ -161,7 +174,7 @@ function love.showError(message)
         for index = 1, #lines do
             local y = 5 + index * ERROR_LINE_HEIGHT
             if y < SCREEN_HEIGHT - ERROR_LINE_HEIGHT then
-                Graphics.debugPrint(5, y, lines[index], white)
+                Graphics.debugPrint(5, y, lines[index], red)
             end
         end
         Graphics.debugPrint(5, SCREEN_HEIGHT - ERROR_LINE_HEIGHT, "Press START to quit", red)
@@ -267,9 +280,9 @@ function love.graphics.getScreenScale()
            SCREEN_HEIGHT / (GAME_HEIGHT * gameScale)
 end
 
-function love.audio.newSource(filePath, type)
-    local soundId = Sound.open(love.filesystem.assetPath(filePath))
-    return loveSound:new({id = soundId, volume = 0, isLooping = false})
+function love.audio.newSource(filePath, name)
+    local sound_id = Sound.open(love.filesystem.assetPath(filePath))
+    return loveSound:new({id = sound_id, volume = 0, isLooping = false, name = name})
 end
 
 function love.graphics.newImageFromFile(filePath)
@@ -290,20 +303,23 @@ function love.graphics.setBackgroundColor(r,g,b)
 end
 
 function love.image.newImageDataFromPath(filePath)
-    local graphicsId = Graphics.loadImage(love.filesystem.assetPath(filePath))
-    local graphics_width = Graphics.getImageWidth(graphicsId)
-    local graphics_height = Graphics.getImageHeight(graphicsId)
+    local graphics_id = Graphics.loadImage(love.filesystem.assetPath(filePath))
+    local graphics_width = Graphics.getImageWidth(graphics_id)
+    local graphics_height = Graphics.getImageHeight(graphics_id)
 
-    return loveImageData:new({id = graphicsId, width = graphics_width, height = graphics_height})
+    love.trace("imagepath: " .. filePath .. " with id:" .. graphics_id)
+
+    return loveImageData:new({id = graphics_id, width = graphics_width, height = graphics_height})
 end
 
 function love.image.newImageDataFromDimensions(image_width, image_height)
-    local graphicsId = Graphics.createImage(image_width, image_height, Color.new(0, 0, 0, 0))
-    return loveImageData:new({id = graphicsId, width = image_width, height = image_height})
+    local graphics_id = Graphics.createImage(image_width, image_height, Color.new(0, 0, 0, 0))
+    return loveImageData:new({id = graphics_id, width = image_width, height = image_height})
 end
 
 function love.image.newImageData(image_width, image_height)
-    return loveImageData:new({width = image_width, heigth = image_height})
+    local graphics_id = Graphics.createImage(image_width, image_height)
+    return loveImageData:new({id = graphics_id, width = image_width, height = image_height})
 end
 
 -- An upscaled copy of `imageData`. vita2d scales textures on the GPU when they
@@ -320,33 +336,36 @@ function love.image.scaledImageData(imageData, factor)
 end
 
 function love.graphics.newFont(fontPath)
-    love.trace(fontPath)
     local assetPath = love.filesystem.assetPath(fontPath)
-    love.trace(assetPath)
     local fontId = Font.load(assetPath)
-    love.trace(fontId)
-    return loveFont:new({ id = fontId})
+    return loveFont:new({ id = fontId })
 end
 
 function love.graphics.setFont(font)
     love.env:setActiveFont(font)
 end
 
--- lpp-vita takes a plain boolean for looping; LOOP and NO_LOOP are LOVE names it
--- never defines, so passing them handed Sound.play a nil that always read false.
+function love.graphics.newImageFont(image_id, glyphs)
+    local font_id = Font.loadImageFont(image_id, glyphs, 7, 1)
+    return loveFont:new({ id = font_id })
+end
+
 function love.audio.play(snd)
+    love.trace("play: " .. snd.name)
     Sound.play(snd.id, snd.isLooping == true)
 end
 
 function love.audio.stop(snd)
-    Sound.pause(snd.id)
+    Sound.close(snd.id)
 end
 
 function love.audio.pause(snd)
+    love.trace("pause: " .. snd.name)
     Sound.pause(snd.id)
 end
 
 function love.audio.resume(snd)
+    love.trace("resume: " .. snd.name)
     Sound.resume(snd.id)
 end
 
@@ -357,8 +376,13 @@ function love.timer.getTime()
 end
 
 function love.keyboard.isDown(key)
-    local pad = Controls.read()
-    return Controls.check(pad, key)
+    for index = 1, #BUTTON_KEYS do
+        if key == BUTTON_KEYS[index][1] then
+            local pad = Controls.read()
+            local button = BUTTON_KEYS[index][2]
+            return Controls.check(pad, button)
+        end
+    end
 end
 
 function love.graphics.translate(dx, dy)
@@ -381,11 +405,27 @@ function love.graphics.draw(drawable, x, y, angle, scale_x, scale_y, offset_x, o
     offset_x = offset_x or 0
     offset_y = offset_y or 0
 
-    -- Everything that can throw (a nil drawable, most often) is resolved before
-    -- the blend opens, so a bad call cannot leave a frame half-drawn.
     local imageId = drawable.id
-    -- Images the game asked to upscale carry the factor instead of a bigger
-    -- texture (see love.image.scaledImageData), so it lands here.
+
+    local pixel_scale = drawable.pixelScale or 1
+    local screen_x = (x + love.coordinateSystemTranslation.x + offset_x) * stretch_x
+    local screen_y = (y + love.coordinateSystemTranslation.y + offset_y) * stretch_y
+
+    love.beginBlend()
+    Graphics.drawScaleImage(screen_x, screen_y, imageId,
+        scale_x * pixel_scale * stretch_x, scale_y * pixel_scale * stretch_y)
+    love.endBlend()
+end
+
+function love.graphics.drawFontImage(drawable, x, y, angle, scale_x, scale_y, offset_x, offset_y)
+    local stretch_x, stretch_y = love.graphics.getScreenScale()
+    scale_x = scale_x or 1
+    scale_y = scale_y or scale_x
+    offset_x = offset_x or 0
+    offset_y = offset_y or 0
+
+    local imageId = drawable.image_id
+
     local pixel_scale = drawable.pixelScale or 1
     local screen_x = (x + love.coordinateSystemTranslation.x + offset_x) * stretch_x
     local screen_y = (y + love.coordinateSystemTranslation.y + offset_y) * stretch_y
@@ -404,21 +444,18 @@ function love.graphics.setScissor(x, y, width, height)
     love.scissor.height = height * stretch_y
 end
 
--- Text is one element of the frame the caller is drawing, so this no longer
--- clears or flips: doing either here wiped whatever love.draw had already put on
--- screen and presented a half-built frame.
-function love.graphics.print( text, x, y, r, scale_x, scale_y)
-    -- love.env.activeFont is 0 until setFont runs, so resolve the id outside the
-    -- blend: printing too early should raise a readable error, not wedge the GPU.
+function love.graphics.print(text, x, y, r, scale_x, scale_y)
     local fontId = love.env.activeFont.id
     local stretch_x, stretch_y = love.graphics.getScreenScale()
-
     love.beginBlend()
-    Font.print(fontId,
-        (x + love.coordinateSystemTranslation.x) * stretch_x,
-        (y + love.coordinateSystemTranslation.y) * stretch_y,
-        text, Color.new(0, 255, 255))
+    Font.imageFontPrint(fontId, text, x * stretch_x, y * stretch_y, 3 * stretch_x, 3 * stretch_y)
     love.endBlend()
+end
+
+function love.event.push(char)
+    if char == "q" then
+        System.exit()
+    end
 end
 
 return love

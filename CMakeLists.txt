@@ -32,9 +32,11 @@ set(VITA_VERSION  "01.00")
 ## Flags and includes for building
 # Note that we make sure not to overwrite previous flags
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -DHAVE_MPG123")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -DHAVE_MPG123 -DHAVE_OGGVORBIS -DUSE_AUDIO_RESAMPLER -DHAVE_LIBSPEEXDSP")
 # Optional. You can specify more param.sfo flags this way.
 set(VITA_MKSFOEX_FLAGS "${VITA_MKSFOEX_FLAGS} -d PARENTAL_LEVEL=1")
+
+find_package(Vorbis REQUIRED)
 
 # Add any additional include paths here
 include_directories(
@@ -132,6 +134,10 @@ target_link_libraries(${PROJECT_NAME}
         SceJpegEnc_stub
         SceVshBridge_stub
         ScePower_stub
+        vorbisfile
+        ogg
+        Vorbis::vorbis
+        speexdsp
 )
 
 ## Create Vita files

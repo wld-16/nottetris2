@@ -28,9 +28,11 @@
 #- xerpi for drawing libs and for FTP server code ----------------------------------------------------------------------#
 #-----------------------------------------------------------------------------------------------------------------------*/
 
+#include <algorithm>
 #include <cstdlib>
 #include <psp2/io/fcntl.h>
 #include <cstring>
+#include <string>
 
 #include "include/nottetris.h"
 #include "include/utils.h"
@@ -73,6 +75,26 @@ extern int FORMAT_JPG;
 #ifdef PARANOID
 static bool draw_state = false;
 #endif
+
+std::unordered_map<char, int> font_x_positions;
+std::unordered_map<char, int> fontwhite_x_positions;
+
+static void initFontPositions()
+{
+    font_x_positions['0'] = 1;
+    font_x_positions['1'] = 9;
+    font_x_positions['2'] = 17;
+    font_x_positions['3'] = 25;
+    font_x_positions['4'] = 33;
+    font_x_positions['5'] = 41;
+    font_x_positions['6'] = 41;
+    font_x_positions['7'] = 57;
+    font_x_positions['8'] = 65;
+    font_x_positions['9'] = 73;
+    font_x_positions['a'] = 73;
+
+    std::unordered_map<char, int> fontwhite_x_positions;
+}
 
 static int lua_init(lua_State *L) {
     int argc = lua_gettop(L);
@@ -132,6 +154,9 @@ static int lua_pixel(lua_State *L) {
     else {
         texture* text = (texture*)(luaL_checkinteger(L, 4));
 #ifndef SKIP_ERROR_HANDLING
+        uint32_t handle = luaL_checkinteger(L, 4);
+        if (handle == 0)
+            return luaL_error(L, "invalid image handle.");
         if (text->magic != 0xABADBEEF)
             return luaL_error(L, "attempt to access wrong memory block type.");
 #endif
@@ -168,6 +193,24 @@ static int lua_drawimg_scale(lua_State *L) {
         vita2d_draw_texture_tint_scale(text->text, x, y, x_scale, y_scale, color);
     }else vita2d_draw_texture_scale(text->text, x, y, x_scale, y_scale);
     return 0;
+}
+
+static int lua_create_image(lua_State *L)
+{
+    int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+    if (argc != 2)
+        return luaL_error(L, "wrong number of arguments");
+#endif
+    unsigned int width = luaL_checkinteger(L, 1);
+    unsigned int height = luaL_checkinteger(L, 2);
+    vita2d_texture* vita2_d_texture = vita2d_create_empty_texture_format(width, height, SCE_GXM_TEXTURE_FORMAT_A8B8G8R8);
+    texture *ret = (texture*)malloc(sizeof(texture));
+    ret->magic = 0xABADBEEF;
+    ret->text = vita2_d_texture;
+    ret->data = NULL;
+    lua_pushinteger(L, (uint32_t)(ret));
+    return 1;
 }
 
 static int lua_width(lua_State *L) {
@@ -210,6 +253,8 @@ static int lua_gpixel(lua_State *L) {
     int y = luaL_checkinteger(L, 2);
     texture* text = (texture*)(luaL_checkinteger(L, 3));
 #ifndef SKIP_ERROR_HANDLING
+    if (text == 0)
+        return luaL_error(L, "invalid image handle.");
     if (text->magic != 0xABADBEEF)
         return luaL_error(L, "attempt to access wrong memory block type.");
 #endif
@@ -336,12 +381,108 @@ static int lua_fprint(lua_State *L) {
     return 0;
 }
 
+/**
+ *
+ * @param L Lua state consisting of the arguments
+ *      1. Filepath to the image file
+ *      2. Characters
+ *      3. Width of one character on the image
+ *      4. Width of the separating space
+ * @return
+ */
+static int lua_loadImageFont(lua_State *L)
+{
+    int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+    if (argc != 4)
+        return luaL_error(L, "wrong number of arguments");
+#endif
+    texture* text = (texture*)(luaL_checkinteger(L, 1));
+    char* glyphs = (char*)(luaL_checkstring(L, 2));
+    unsigned int character_width = luaL_checkinteger(L, 3);
+    unsigned int separating_space = luaL_checkinteger(L, 4);
+
+#ifndef SKIP_ERROR_HANDLING
+    if (text == NULL)
+        return luaL_error(L, "Error loading image.");
+#endif
+
+    unsigned int height = sceGxmTextureGetHeight(&text->text->gxm_tex);
+    auto ret = new bitmap_font();
+    ret->magic = 0x4C464E56;
+    ret->texture = text->text;
+    ret->line_height = height;
+    ret->base_height = height;
+
+    size_t i = 1;
+
+    ret->glyphs = std::unordered_map<char, bitmap_glyph>();
+
+    std::string glyph_string(glyphs);
+
+    std::for_each(glyph_string.begin(), glyph_string.end(), [&](char glyph) {
+        bitmap_glyph bm_glyph = {
+            .x = 0,
+            .y = 0,
+            .width = character_width,
+            .height = height,
+            .xoffset = i,
+            .yoffset = 0,
+            .xadvance = 0,
+        };
+        i += (separating_space + character_width);
+        ret->glyphs[glyph] = bm_glyph;
+    });
+
+    lua_pushinteger(L, (uint32_t)(ret));
+    return 1;
+}
+
+static int lua_imageFontPrint(lua_State *L)
+{
+    int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+    if (argc != 6)
+        return luaL_error(L, "wrong number of arguments");
+#endif
+
+    auto font = (bitmap_font*)(luaL_checkinteger(L, 1));
+    char* text = (char*)luaL_checkstring(L, 2);
+    unsigned int x = luaL_checkinteger(L, 3);
+    unsigned int y = luaL_checkinteger(L, 4);
+    unsigned int x_stretch = luaL_checkinteger(L, 5);
+    unsigned int y_stretch = luaL_checkinteger(L, 6);
+
+
+    size_t x_offset = 0;
+
+    std::string text_string(text);
+    std::for_each(text_string.begin(), text_string.end(), [&](char c) {
+
+        auto glyph = font->glyphs[c];
+        vita2d_draw_texture_part_scale(
+            font->texture,
+            x + x_offset,
+            y,
+            glyph.x + glyph.xoffset,
+            glyph.y + glyph.yoffset,
+            glyph.width,
+            glyph.height,
+            x_stretch,
+            y_stretch
+            );
+        x_offset += 8 * x_stretch;
+    });
+    return 0;
+}
+
 
 //Register our Graphics Functions
 const luaL_Reg Graphics_functions[] = {
     {"debugPrint",          lua_print},
     {"drawPixel",           lua_pixel},
     {"drawScaleImage",      lua_drawimg_scale},
+    {"createImage",         lua_create_image},
     {"getImageHeight",      lua_height},
     {"getImageWidth",       lua_width},
     {"getPixel",            lua_gpixel},
@@ -354,7 +495,9 @@ const luaL_Reg Graphics_functions[] = {
 //Register our Font Functions
 const luaL_Reg Font_functions[] = {
     {"load",            lua_loadFont},
+    {"loadImageFont",   lua_loadImageFont},
     {"print",           lua_fprint},
+    { "imageFontPrint", lua_imageFontPrint },
     {0, 0}
 };
 
