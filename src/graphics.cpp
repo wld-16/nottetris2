@@ -76,24 +76,111 @@ extern int FORMAT_JPG;
 static bool draw_state = false;
 #endif
 
-std::unordered_map<char, int> font_x_positions;
-std::unordered_map<char, int> fontwhite_x_positions;
+static std::unordered_map<char, std::pair<unsigned int, unsigned int>> font_map;
+static std::unordered_map<char, std::pair<unsigned int, unsigned int>> fontwhite_map;
 
 static void initFontPositions()
 {
-    font_x_positions['0'] = 1;
-    font_x_positions['1'] = 9;
-    font_x_positions['2'] = 17;
-    font_x_positions['3'] = 25;
-    font_x_positions['4'] = 33;
-    font_x_positions['5'] = 41;
-    font_x_positions['6'] = 41;
-    font_x_positions['7'] = 57;
-    font_x_positions['8'] = 65;
-    font_x_positions['9'] = 73;
-    font_x_positions['a'] = 73;
+    font_map['0'] = std::make_pair(1, 7);
+    font_map['1'] = std::make_pair(9, 7);
+    font_map['2'] = std::make_pair(17, 7);
+    font_map['3'] = std::make_pair(25, 7);
+    font_map['4'] = std::make_pair(33, 7);
+    font_map['5'] = std::make_pair(41, 7);
+    font_map['6'] = std::make_pair(41, 7);
+    font_map['7'] = std::make_pair(57, 7);
+    font_map['8'] = std::make_pair(65, 7);
+    font_map['9'] = std::make_pair(73, 7);
+    font_map['a'] = std::make_pair(81, 7);
+    font_map['b'] = std::make_pair(89, 7);
+    font_map['c'] = std::make_pair(97, 7);
+    font_map['d'] = std::make_pair(105, 7);
+    font_map['e'] = std::make_pair(113, 7);
+    font_map['f'] = std::make_pair(121, 7);
+    font_map['g'] = std::make_pair(129, 7);
+    font_map['h'] = std::make_pair(137, 7);
+    font_map['i'] = std::make_pair(145, 7);
+    font_map['j'] = std::make_pair(153, 7);
+    font_map['k'] = std::make_pair(161, 7);
+    font_map['l'] = std::make_pair(169, 7);
+    font_map['m'] = std::make_pair(177, 7);
+    font_map['n'] = std::make_pair(185, 7);
+    font_map['o'] = std::make_pair(193, 7);
+    font_map['p'] = std::make_pair(201, 7);
+    font_map['q'] = std::make_pair(209, 7);
+    font_map['r'] = std::make_pair(217, 7);
+    font_map['s'] = std::make_pair(225, 7);
+    font_map['t'] = std::make_pair(233, 7);
+    font_map['T'] = std::make_pair(241, 6);
+    font_map['u'] = std::make_pair(248, 7);
+    font_map['v'] = std::make_pair(256, 7);
+    font_map['w'] = std::make_pair(264, 7);
+    font_map['x'] = std::make_pair(272, 7);
+    font_map['y'] = std::make_pair(280, 7);
+    font_map['z'] = std::make_pair(288, 7);
+    font_map['.'] = std::make_pair(296, 7);
+    font_map[','] = std::make_pair(304, 7);
+    font_map['\''] = std::make_pair(313, 8);
+    font_map['C'] = std::make_pair(321, 7);
+    font_map['-'] = std::make_pair(329, 7);
+    font_map['#'] = std::make_pair(337, 8);
+    font_map['_'] = std::make_pair(346, 7);
+    font_map['>'] = std::make_pair(354, 7);
+    font_map[':'] = std::make_pair(362, 7);
+    font_map['<'] = std::make_pair(370, 7);
+    font_map['!'] = std::make_pair(378, 7);
+    font_map[' '] = std::make_pair(386, 8);
 
-    std::unordered_map<char, int> fontwhite_x_positions;
+    fontwhite_map['0'] = std::make_pair(1, 7);
+    fontwhite_map['1'] = std::make_pair(9, 7);
+    fontwhite_map['2'] = std::make_pair(17, 7);
+    fontwhite_map['3'] = std::make_pair(25, 7);
+    fontwhite_map['4'] = std::make_pair(33, 7);
+    fontwhite_map['5'] = std::make_pair(41, 7);
+    fontwhite_map['6'] = std::make_pair(41, 7);
+    fontwhite_map['7'] = std::make_pair(57, 7);
+    fontwhite_map['8'] = std::make_pair(65, 7);
+    fontwhite_map['9'] = std::make_pair(73, 7);
+    fontwhite_map['a'] = std::make_pair(81, 7);
+    fontwhite_map['b'] = std::make_pair(89, 7);
+    fontwhite_map['c'] = std::make_pair(97, 7);
+    fontwhite_map['d'] = std::make_pair(105, 7);
+    fontwhite_map['e'] = std::make_pair(113, 7);
+    fontwhite_map['f'] = std::make_pair(121, 7);
+    fontwhite_map['g'] = std::make_pair(129, 7);
+    fontwhite_map['h'] = std::make_pair(137, 7);
+    fontwhite_map['i'] = std::make_pair(145, 7);
+    fontwhite_map['j'] = std::make_pair(153, 7);
+    fontwhite_map['k'] = std::make_pair(161, 7);
+    fontwhite_map['l'] = std::make_pair(169, 7);
+    fontwhite_map['m'] = std::make_pair(177, 7);
+    fontwhite_map['n'] = std::make_pair(185, 7);
+    fontwhite_map['o'] = std::make_pair(193, 7);
+    fontwhite_map['p'] = std::make_pair(201, 7);
+    fontwhite_map['q'] = std::make_pair(209, 7);
+    fontwhite_map['r'] = std::make_pair(217, 7);
+    fontwhite_map['s'] = std::make_pair(225, 7);
+    fontwhite_map['t'] = std::make_pair(233, 7);
+    fontwhite_map['T'] = std::make_pair(241, 6);
+    fontwhite_map['u'] = std::make_pair(248, 7);
+    fontwhite_map['v'] = std::make_pair(256, 7);
+    fontwhite_map['w'] = std::make_pair(264, 7);
+    fontwhite_map['x'] = std::make_pair(272, 7);
+    fontwhite_map['y'] = std::make_pair(280, 7);
+    fontwhite_map['z'] = std::make_pair(288, 7);
+    fontwhite_map['.'] = std::make_pair(296, 7);
+    fontwhite_map[','] = std::make_pair(304, 7);
+    fontwhite_map['\''] = std::make_pair(313, 8);
+    fontwhite_map['C'] = std::make_pair(321, 7);
+    fontwhite_map['-'] = std::make_pair(329, 7);
+    fontwhite_map['#'] = std::make_pair(337, 8);
+    fontwhite_map['_'] = std::make_pair(346, 7);
+    fontwhite_map['>'] = std::make_pair(354, 7);
+    fontwhite_map[':'] = std::make_pair(362, 7);
+    fontwhite_map['<'] = std::make_pair(370, 7);
+    fontwhite_map['!'] = std::make_pair(378, 7);
+    fontwhite_map['+'] = std::make_pair(386, 7);
+    fontwhite_map[' '] = std::make_pair(394, 8);
 }
 
 static int lua_init(lua_State *L) {
@@ -394,13 +481,12 @@ static int lua_loadImageFont(lua_State *L)
 {
     int argc = lua_gettop(L);
 #ifndef SKIP_ERROR_HANDLING
-    if (argc != 4)
+    if (argc != 3)
         return luaL_error(L, "wrong number of arguments");
 #endif
     texture* text = (texture*)(luaL_checkinteger(L, 1));
     char* glyphs = (char*)(luaL_checkstring(L, 2));
-    unsigned int character_width = luaL_checkinteger(L, 3);
-    unsigned int separating_space = luaL_checkinteger(L, 4);
+    bool is_white = lua_toboolean(L, 5);
 
 #ifndef SKIP_ERROR_HANDLING
     if (text == NULL)
@@ -414,25 +500,31 @@ static int lua_loadImageFont(lua_State *L)
     ret->line_height = height;
     ret->base_height = height;
 
-    size_t i = 1;
-
     ret->glyphs = std::unordered_map<char, bitmap_glyph>();
 
     std::string glyph_string(glyphs);
+    std::unordered_map<char, std::pair<unsigned int, unsigned int>> active_offset_map;
+    if (is_white)
+    {
+        active_offset_map = fontwhite_map;
+    } else
+    {
+        active_offset_map = font_map;
+    }
 
-    std::for_each(glyph_string.begin(), glyph_string.end(), [&](char glyph) {
-        bitmap_glyph bm_glyph = {
-            .x = 0,
-            .y = 0,
-            .width = character_width,
-            .height = height,
-            .xoffset = i,
-            .yoffset = 0,
-            .xadvance = 0,
-        };
-        i += (separating_space + character_width);
-        ret->glyphs[glyph] = bm_glyph;
-    });
+        std::for_each(glyph_string.begin(), glyph_string.end(), [&](char glyph) {
+            bitmap_glyph bm_glyph = {
+                .x = 0,
+                .y = 0,
+                .width = active_offset_map[glyph].second,
+                .height = height,
+                .xoffset = active_offset_map[glyph].first,
+                .yoffset = 0,
+                .xadvance = 0,
+            };
+            ret->glyphs[glyph] = bm_glyph;
+        });
+
 
     lua_pushinteger(L, (uint32_t)(ret));
     return 1;
@@ -476,6 +568,35 @@ static int lua_imageFontPrint(lua_State *L)
     return 0;
 }
 
+static int lua_rect(lua_State *L) {
+    int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+    if (argc != 5)
+        return luaL_error(L, "wrong number of arguments.");
+#endif
+#ifdef PARANOID
+    if (!draw_state)
+        return luaL_error(L, "drawRect can't be called outside a blending phase.");
+#endif
+    float x1 = luaL_checknumber(L, 1);
+    float x2 = luaL_checknumber(L, 2);
+    float y1 = luaL_checknumber(L, 3);
+    float y2 = luaL_checknumber(L, 4);
+    int color = luaL_checkinteger(L,5);
+    if (x2 < x1) {
+        int tmp = x2;
+        x2 = x1;
+        x1 = tmp;
+    }
+    if (y2 < y1) {
+        int tmp = y2;
+        y2 = y1;
+        y1 = tmp;
+    }
+    vita2d_draw_rectangle(x1, y1, x2-x1, y2-y1, RGBA8((color) & 0xFF, (color >> 8) & 0xFF, (color >> 16) & 0xFF, (color >> 24) & 0xFF));
+    return 0;
+}
+
 
 //Register our Graphics Functions
 const luaL_Reg Graphics_functions[] = {
@@ -489,6 +610,7 @@ const luaL_Reg Graphics_functions[] = {
     {"initBlend",           lua_init},
     {"loadImage",           lua_loadimg},
     {"termBlend",           lua_term},
+    {"fillRect",            lua_rect},
     {0, 0}
 };
 
@@ -502,6 +624,7 @@ const luaL_Reg Font_functions[] = {
 };
 
 void luaGraphics_init(lua_State *L) {
+    initFontPositions();
     uint32_t FILTER_POINT = (uint32_t)SCE_GXM_TEXTURE_FILTER_POINT;
     uint32_t FILTER_LINEAR = (uint32_t)SCE_GXM_TEXTURE_FILTER_LINEAR;
     uint32_t MEM_VRAM = (uint32_t)SCE_KERNEL_MEMBLOCK_TYPE_USER_CDRAM_RW;

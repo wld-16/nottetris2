@@ -149,7 +149,7 @@ function gameA_draw()
 	end
 	
 	--background--
-	love.graphics.draw(gamebackgroundcutoff, 0, 0, 0, scale, scale)
+	love.graphics.draw(main.gamebackgroundcutoff, 0, 0, 0, scale, scale)
 	---------------
 	--tetrishapes--
 	if cuttingtimer == lineclearduration then
@@ -188,7 +188,7 @@ function gameA_draw()
 	love.graphics.setColor(255, 255, 255)
 	--Next piece
 	if main.pause == false then
-		love.graphics.draw(nextpieceimg[nextpiece], 136*scale, 120*scale, nextpiecerot, 1, 1, piececenterpreview[nextpiece][1]*scale, piececenterpreview[nextpiece][2]*scale)
+		love.graphics.draw(main.nextpieceimg[nextpiece], 136*scale, 120*scale, nextpiecerot, 1, 1, piececenterpreview[nextpiece][1]*scale, piececenterpreview[nextpiece][2]*scale)
 	end
 	
 	----------------
@@ -200,7 +200,7 @@ function gameA_draw()
 			love.graphics.setScissor(105*scale, 35*scale, 55*scale, 9*scale)
 		end
 		
-		love.graphics.setFont(whitefont)
+		love.graphics.setFont(main.whitefont)
 		
 		local offsetX = 0
 		for i = 1, tostring(lastscoreadd):len() - 1 do
@@ -209,7 +209,7 @@ function gameA_draw()
 		
 		love.graphics.print("+" .. lastscoreadd, 136*scale+offsetX, 36*scale-scoreaddtimer/scoreaddtime*8*scale, 0, scale)
 		
-		love.graphics.setFont(tetrisfont)	
+		love.graphics.setFont(main.tetrisfont)
 		
 		if fullscreen then
 			love.graphics.setScissor(fullscreenoffsetX, fullscreenoffsetY, 160*scale, 144*scale)
@@ -234,7 +234,7 @@ function gameA_draw()
 		end
 		
 		love.graphics.setColor(color, color, color)
-		love.graphics.rectangle("fill", 0, (i-1)*8*scale, math.floor(6*scale*fullness), 8*scale)
+		-- love.graphics.rectangle("fill", 0, (i-1)*8*scale, math.floor(6*scale *fullness), 8*scale)
 	end
 	
 	love.graphics.setColor(255, 255, 255)

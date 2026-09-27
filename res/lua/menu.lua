@@ -44,8 +44,6 @@ function menu_draw()
         love.graphics.translate(fullscreenoffsetX, fullscreenoffsetY)
     end
 
-    love.graphics.print( "gamstate menu: " .. main.gamestate, 300, 30, 0, 1, 1)
-
     if main.gamestate == "logo" then
         if logotime <= logoduration then
             love.graphics.draw(main.stabyourselflogo, 7*scale, math.floor(-22*scale + 80*(logotime/logoduration)*scale), 0, scale, scale, 0, 0)

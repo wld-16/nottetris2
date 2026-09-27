@@ -398,8 +398,8 @@ function loadimages()
 
    ----font--
    ---- original
-   main.tetrisfont = newPaddedImageFont("graphics/font.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<! ")
-   main.whitefont = newPaddedImageFont("graphics/fontwhite.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<!+ ")
+   main.tetrisfont = newPaddedImageFont("graphics/font.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<! ", false)
+   main.whitefont = newPaddedImageFont("graphics/fontwhite.png", "0123456789abcdefghijklmnopqrstTuvwxyz.,'C-#_>:<!+ ", true)
 --
    ---- modified font
    -- main.tetrisfont = love.graphics.newFont("graphics/font/Masaaki-Regular.ttf")
@@ -555,11 +555,10 @@ function padImagedata(source) --returns image, not imagedata!
     return love.graphics.newImageFromImageData(source)
 end
 
-function newPaddedImageFont(filename, glyphs)
+function newPaddedImageFont(filename, glyphs, is_white)
     local source = newImageData(filename)
     local w, h = source:getWidth(), source:getHeight()
 
-    love.trace("power of two")
     -- Find closest power-of-two.
     local wp = math.pow(2, math.ceil(math.log(w)/math.log(2)))
     local hp = math.pow(2, math.ceil(math.log(h)/math.log(2)))
@@ -570,10 +569,10 @@ function newPaddedImageFont(filename, glyphs)
         padded:paste(source, 0, 0)
         local image = love.graphics.newImageFromImageData(padded)
         image:setFilter("nearest", "nearest")
-        return love.graphics.newImageFont(image.id, glyphs)
+        return love.graphics.newImageFont(image.id, glyphs, is_white)
     end
 
-    return love.graphics.newImageFont(source, glyphs)
+    return love.graphics.newImageFont(source, glyphs, is_white)
 end
 
 -- Nearest-neighbour upscale of the piece graphics. The original copied every
@@ -770,9 +769,9 @@ end
 
 function changescale(i)
    love.graphics.setMode( 160*i, 144*i, false, vsync, 0 )
-   nextpieceimg = {}
+   main.nextpieceimg = {}
    for j = 1, 7 do
-      nextpieceimg[j] = newPaddedImage( "graphics/pieces/"..j..".png", i )
+      main.nextpieceimg[j] = newPaddedImage( "graphics/pieces/"..j..".png", i )
    end
    physicsscale = i/4
 end
@@ -943,6 +942,7 @@ function love.keypressed( key )
          newhighscores()
       elseif controls.check("return", key) then
          if gameno == 1 then
+            gameA.loadMain(main, love)
             gameA_load()
          else
             gameB_load()

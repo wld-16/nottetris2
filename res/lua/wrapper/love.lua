@@ -11,9 +11,15 @@ local loveImage = require "loveImage"
 local loveImageData = require "loveImageData"
 local loveEnvironment = require "loveEnvironment"
 local loveFont = require "loveFont"
+local loveWorld = require "loveWorld"
+local loveBody = require "loveBody"
+local lovePolygonShape = require "lovePolygonShape"
+local loveRectangleShape = require "loveRectangleShape"
 
 -- Where the game's files live on the Vita
-GAME_ROOT = "ux0:/data/lpp-vita/samples/nottetris2/"
+-- GAME_ROOT_APP = "app0:/"
+
+GAME_ROOT = "ux0:/data/nottetris2/"
 
 -- PSVita screen resolution
 SCREEN_WIDTH = 960
@@ -47,7 +53,8 @@ local love = {
     scissor = { x = 0, y = 0, width = SCREEN_WIDTH, height = SCREEN_HEIGHT },
     event = {},
     keyboard = {},
-    textCount = 1
+    textCount = 1,
+    physics = {}
 }
 
 function love.init()
@@ -83,8 +90,8 @@ end
 -- Rough character metrics of the debug font, used to lay the error screen out.
 ERROR_LINE_HEIGHT = 200
 ERROR_CHARACTERS_PER_LINE = 100
-ERROR_LOG_PATH = GAME_ROOT .. "error.log"
-TRACE_LOG_PATH = GAME_ROOT .. "trace.log"
+ERROR_LOG_PATH = "ux0:/data/nottetris2/" .. "error.log"
+TRACE_LOG_PATH = "ux0:/data/nottetris2/" .. "trace.log"
 
 -- FCREATE is O_CREAT|O_WRONLY and does not truncate, so an old longer file would
 -- leave a garbage tail behind the new contents.
@@ -98,15 +105,8 @@ end
 
 love.traceLog = {}
 
--- Kept short because tracing outlives loading: pieces are built from images at
--- spawn time too, so the log has to stay a fixed-size window on the last steps
--- rather than a transcript of the whole session.
 TRACE_LOG_LENGTH = 20
 
--- Not every failure on the Vita is a Lua error: a malformed image or font takes
--- the process down inside the native loader, with no chance to display anything.
--- Each step rewrites and closes the whole log, so after a hard crash the last
--- line in trace.log is the last step that was reached.
 function love.trace(step)
     love.traceLog[#love.traceLog + 1] = tostring(step)
     if #love.traceLog > TRACE_LOG_LENGTH then
@@ -345,8 +345,16 @@ function love.graphics.setFont(font)
     love.env:setActiveFont(font)
 end
 
-function love.graphics.newImageFont(image_id, glyphs)
-    local font_id = Font.loadImageFont(image_id, glyphs, 7, 1)
+function love.graphics.print(text, x, y, r, scale_x, scale_y)
+    local fontId = love.env.activeFont.id
+    local stretch_x, stretch_y = love.graphics.getScreenScale()
+    love.beginBlend()
+    Font.imageFontPrint(fontId, text, x * stretch_x, y * stretch_y, 3 * stretch_x, 3 * stretch_y)
+    love.endBlend()
+end
+
+function love.graphics.newImageFont(image_id, glyphs, is_white)
+    local font_id = Font.loadImageFont(image_id, glyphs, is_white)
     return loveFont:new({ id = font_id })
 end
 
@@ -444,18 +452,60 @@ function love.graphics.setScissor(x, y, width, height)
     love.scissor.height = height * stretch_y
 end
 
-function love.graphics.print(text, x, y, r, scale_x, scale_y)
-    local fontId = love.env.activeFont.id
-    local stretch_x, stretch_y = love.graphics.getScreenScale()
-    love.beginBlend()
-    Font.imageFontPrint(fontId, text, x * stretch_x, y * stretch_y, 3 * stretch_x, 3 * stretch_y)
-    love.endBlend()
+function love.physics.newWorld(x1, y1, x2, y2, xg, yg, sleep)
+    return loveWorld:new({
+        x1 = x1,
+        y1 = y1,
+        x2 = x2,
+        y2 = y2,
+        xg = xg,
+        yg = yg,
+        sleep = sleep
+    })
+end
+
+function love.physics.newBody(world, x, y, m, i)
+    return loveBody:new({
+        world = world,
+        x = x,
+        y = y,
+        m = m,
+        i = i
+    })
+end
+
+function love.physics.newPolygonShape(body, ...)
+    local arg = {...}
+    return lovePolygonShape:new({ body = body, points = unpack(arg)})
+end
+
+function love.physics.newRectangleShape(body, x, y, width, height, angle)
+    local rect = loveRectangleShape:new({
+        body = body,
+        x = x,
+        y = y,
+        width = width,
+        height = height,
+        angle = angle
+    })
+    love.trace("rect:getWidth(): " .. rect:getWidth())
+    love.trace("now adding shape to body with x: " .. body:getX())
+    body:addShape(rect)
+    return rect
 end
 
 function love.event.push(char)
     if char == "q" then
         System.exit()
     end
+end
+
+function love.graphics.setColor(r, g, b)
+    love.graphics.color = Color.new(r, g, b)
+end
+
+function love.graphics.rectangle(mode, x, y, width, height, rx, ry, segments)
+    Graphics.fillRect(x,y, x + width, y + height, love.graphics.color)
 end
 
 return love

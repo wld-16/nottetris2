@@ -164,6 +164,10 @@ vita_create_vpk(${PROJECT_NAME}.vpk ${VITA_TITLEID} ${PROJECT_NAME}.self
         FILE res/lua/wrapper/loveImage.lua wrapper/loveImage.lua
         FILE res/lua/wrapper/loveImageData.lua wrapper/loveImageData.lua
         FILE res/lua/wrapper/loveSound.lua wrapper/loveSound.lua
+        FILE res/lua/wrapper/loveWorld.lua wrapper/loveWorld.lua
+        FILE res/lua/wrapper/lovePolygonShape.lua wrapper/lovePolygonShape.lua
+        FILE res/lua/wrapper/loveRectangleShape.lua wrapper/loveRectangleShape.lua
+        #FILE res/sounds/themeA.ogg sounds/themeA.ogg
         FILE sce_sys/icon0.png sce_sys/icon0.png
         FILE sce_sys/livearea/contents/bg.png sce_sys/livearea/contents/bg.png
         FILE sce_sys/livearea/contents/startup.png sce_sys/livearea/contents/startup.png
