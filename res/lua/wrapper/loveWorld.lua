@@ -7,7 +7,7 @@ local loveWorld = {
     y2 = 0,
     xg = 1,
     yg = 1,
-    sleep = true,
+    sleep = false,
     callback = {}
 }
 
@@ -31,7 +31,7 @@ function loveWorld:setCallbacks(callbacks)
 end
 
 function loveWorld:update(dt)
-    
+    Physics.update(self.id, dt)
 end
 
 return loveWorld

@@ -1,5 +1,13 @@
 gameB = {}
 
+local main = {}
+local love = {}
+
+function gameB.loadMain(mainInstance, loveInstance)
+	main = mainInstance
+	love = loveInstance
+end
+
 function gameB_load()
 	gamestate = "gameB"
 	

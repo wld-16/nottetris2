@@ -25,7 +25,7 @@ include("${VITASDK}/share/vita.cmake" REQUIRED)
 set(VITA_APP_NAME "Not Tetris 2")
 # Unique ID must be exactly 9 characters. Recommended: XXXXYYYYY where X =
 # unique string of developer and Y = a unique number for this app
-set(VITA_TITLEID  "WLDW00001")
+set(VITA_TITLEID  "WLDD00001")
 # Optional version string to show in LiveArea's more info screen
 set(VITA_VERSION  "01.00")
 
@@ -97,6 +97,7 @@ add_executable(${PROJECT_NAME}
         src/sound.cpp
         src/timer.cpp
         src/system.cpp
+        src/physics.cpp
 )
 
 # Library to link to (drop the -l prefix). This will mostly be stubs.
@@ -138,6 +139,7 @@ target_link_libraries(${PROJECT_NAME}
         ogg
         Vorbis::vorbis
         speexdsp
+        box2d
 )
 
 ## Create Vita files

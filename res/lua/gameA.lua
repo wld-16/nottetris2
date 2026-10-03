@@ -1,3 +1,5 @@
+local controls = require 'controls'
+
 local gameA = {}
 
 local main = {}
@@ -6,6 +8,7 @@ local love = {}
 function gameA.loadMain(mainInstance, loveInstance)
 	main = mainInstance
 	love = loveInstance
+	controls.initLove(loveInstance)
 end
 
 function gameA_load()
@@ -16,7 +19,7 @@ function gameA_load()
 	
 	difficulty_speed = 100
 
-	cuttingtimer = lineclearduration
+	main.cuttingtimer = main.lineclearduration
 	
 	scorescore = 0
 	levelscore = 0
@@ -152,7 +155,7 @@ function gameA_draw()
 	love.graphics.draw(main.gamebackgroundcutoff, 0, 0, 0, scale, scale)
 	---------------
 	--tetrishapes--
-	if cuttingtimer == lineclearduration then
+	if main.cuttingtimer == main.lineclearduration then
 		for i,v in pairs(tetribodies) do
 			if main.pause == false then
 				love.graphics.draw( tetriimages[i], v:getX()*physicsscale, v:getY()*physicsscale, v:getAngle(), 1, 1, piececenter[tetrikind[i]][1]*scale, piececenter[tetrikind[i]][2]*scale)
@@ -167,8 +170,8 @@ function gameA_draw()
 		
 		--blinky lines
 		
-		local section = math.ceil(cuttingtimer/(lineclearduration/lineclearblinks))
-		if math.mod(section, 2) == 1 or cuttingtimer == 0 then
+		local section = math.ceil(main.cuttingtimer/(main.lineclearduration/lineclearblinks))
+		if math.mod(section, 2) == 1 or main.cuttingtimer == 0 then
 		
 			local rr, rg, rb = unpack(getrainbowcolor(hue))
 			local r = 145 + rr*64
@@ -288,7 +291,7 @@ end
 
 function gameA_update(dt)
 	--NEXTPIECE ROTATION (rotating allday erryday)
-	if cuttingtimer == lineclearduration then
+	if main.cuttingtimer == main.lineclearduration then
 		nextpiecerot = nextpiecerot + nextpiecerotspeed*dt
 		while nextpiecerot > math.pi*2 do
 			nextpiecerot = nextpiecerot - math.pi*2
@@ -296,19 +299,19 @@ function gameA_update(dt)
 	end
 	
 	--CUTTING TIMER
-	if cuttingtimer < lineclearduration then
-		cuttingtimer = cuttingtimer + dt
-		if cuttingtimer >= lineclearduration then
+	if main.cuttingtimer < main.lineclearduration then
+		main.cuttingtimer = main.cuttingtimer + dt
+		if main.cuttingtimer >= main.lineclearduration then
 			--RANDOMIZE NEXT PIECE
 			nextpiece = math.random(7)
 			
-			cuttingtimer = lineclearduration
+			main.cuttingtimer = main.lineclearduration
 			skipupdate = true
 			scoreaddtimer = 0
 		
 			if newlevelbeep then
-				love.audio.stop(newlevel)
-				love.audio.play(newlevel)
+				-- love.audio.stop(main.newlevel)
+				love.audio.play(main.newlevel)
 				newlevelbeep = false
 			end
 		end
@@ -316,7 +319,7 @@ function gameA_update(dt)
 	end
 	
 	--SCOREADD TIMER
-	if cuttingtimer == lineclearduration then
+	if main.cuttingtimer == main.lineclearduration then
 		if scoreaddtimer < scoreaddtime then
 			scoreaddtimer = scoreaddtimer + dt
 			if scoreaddtimer > scoreaddtime then
@@ -373,7 +376,7 @@ function gameA_update(dt)
 	
 	--DENSITY UPDATE TIMER
 	if densityupdatetimer >= densityupdateinterval then
-		while densityupdatetimer >= densityupdateinterval and cuttingtimer == lineclearduration do
+		while densityupdatetimer >= densityupdateinterval and main.cuttingtimer == main.lineclearduration do
 			checklinedensity(false)
 			densityupdatetimer = densityupdatetimer - densityupdateinterval
 		end
@@ -917,7 +920,7 @@ function checklinedensity(active) --checks all 18 lines and, if active == true, 
 		for i = 1, 18 do
 			if linearea[i] > 1024*linecleartreshold then
 				if removedlines == false then
-					cuttingtimer = 0
+					main.cuttingtimer = 0
 					removedlines = true
 					
 					--Save position, image, kind and image of each kind so I can draw them even after changing the actual parts.
@@ -953,11 +956,11 @@ function checklinedensity(active) --checks all 18 lines and, if active == true, 
 	
 		if removedlines then
 			if numberoflines >= 4 then
-				love.audio.stop(fourlineclear)
-				love.audio.play(fourlineclear)
+				-- love.audio.stop(main.fourlineclear)
+				love.audio.play(main.fourlineclear)
 			else
-				love.audio.stop(lineclear)
-				love.audio.play(lineclear)
+				--- love.audio.stop(main.lineclear)
+				love.audio.play(main.lineclear)
 			end
 			
 			--Possible scoring functions:
@@ -1013,8 +1016,8 @@ function checklinedensity(active) --checks all 18 lines and, if active == true, 
 				end
 			end
 		else
-			love.audio.stop(blockfall)
-			love.audio.play(blockfall)
+			-- love.audio.stop(main.blockfall)
+			love.audio.play(main.blockfall)
 		end
 		
 		return removedlines
@@ -1175,10 +1178,10 @@ function collideA(a, b, coll) --box2d callback. calls endblock.
 				if tetribodies[1]:getY() < losingY then
 					main.gamestate = "failingA"
 					if musicno < 4 then
-						love.audio.stop(music[musicno])
+						love.audio.stop(main.music[main.musicno])
 					end
-					love.audio.stop(gameover1)
-					love.audio.play(gameover1)
+					-- love.audio.stop(main.gameover1)
+					love.audio.play(main.gameover1)
 				
 					if wallshapes[2] then
 						wallshapes[2]:destroy()

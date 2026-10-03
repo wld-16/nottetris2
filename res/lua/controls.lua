@@ -17,6 +17,12 @@ controls.settings.downp2 = {"key", {"m"}}
 controls.settings.rotateleftp2 = {"key", {"o"}}
 controls.settings.rotaterightp2 = {"key", {"p"}}
 
+local love = {}
+
+function controls.initLove(loveInstance)
+	love = loveInstance
+end
+
 function controls.check(t, key)
 	if controls.settings[t][1] == "key" then
 		for i = 1, #controls.settings[t][2] do
@@ -38,3 +44,5 @@ function controls.isDown(t)
 		return false
 	end
 end
+
+return controls

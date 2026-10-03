@@ -21,6 +21,7 @@ void luaVideo_init(lua_State *L);
 void luaDatabase_init(lua_State *L);
 void luaRegistry_init(lua_State *L);
 void luaGui_init(lua_State *L);
+void luaPhysics_init(lua_State *L);
 
 
 extern vita2d_pgf* debug_font;

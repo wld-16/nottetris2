@@ -368,12 +368,10 @@ function love.audio.stop(snd)
 end
 
 function love.audio.pause(snd)
-    love.trace("pause: " .. snd.name)
     Sound.pause(snd.id)
 end
 
 function love.audio.resume(snd)
-    love.trace("resume: " .. snd.name)
     Sound.resume(snd.id)
 end
 
@@ -453,19 +451,37 @@ function love.graphics.setScissor(x, y, width, height)
 end
 
 function love.physics.newWorld(x1, y1, x2, y2, xg, yg, sleep)
-    return loveWorld:new({
-        x1 = x1,
-        y1 = y1,
-        x2 = x2,
-        y2 = y2,
-        xg = xg,
-        yg = yg,
-        sleep = sleep
-    })
+    if(sleep == true) then
+        local world_id = Physics.newWorld(xg, yg, 1)
+        return loveWorld:new({
+            id = world_id,
+            x1 = x1,
+            y1 = y1,
+            x2 = x2,
+            y2 = y2,
+            xg = xg,
+            yg = yg,
+            sleep = sleep
+        })
+    else
+        local world_id = Physics.newWorld(xg, yg, 0)
+        return loveWorld:new({
+            id = world_id,
+            x1 = x1,
+            y1 = y1,
+            x2 = x2,
+            y2 = y2,
+            xg = xg,
+            yg = yg,
+            sleep = sleep
+        })
+    end
 end
 
 function love.physics.newBody(world, x, y, m, i)
+    local body_id = Physics.newBody(world.id, x, y, m, i)
     return loveBody:new({
+        id = body_id,
         world = world,
         x = x,
         y = y,
@@ -475,12 +491,20 @@ function love.physics.newBody(world, x, y, m, i)
 end
 
 function love.physics.newPolygonShape(body, ...)
-    local arg = {...}
-    return lovePolygonShape:new({ body = body, points = unpack(arg)})
+    local args = {...}
+    local shape_id = Physics.newPolygonShape(body.id, args)
+    return lovePolygonShape:new({
+        id = shape_id,
+        body = body,
+        points = unpack(args)
+    })
 end
 
 function love.physics.newRectangleShape(body, x, y, width, height, angle)
+    if(angle == nil) then angle = 0 end
+    local shape_id = Physics.newRectangleShape(body.id, x, y, width, height, angle)
     local rect = loveRectangleShape:new({
+        id = shape_id,
         body = body,
         x = x,
         y = y,
@@ -488,9 +512,6 @@ function love.physics.newRectangleShape(body, x, y, width, height, angle)
         height = height,
         angle = angle
     })
-    love.trace("rect:getWidth(): " .. rect:getWidth())
-    love.trace("now adding shape to body with x: " .. body:getX())
-    body:addShape(rect)
     return rect
 end
 

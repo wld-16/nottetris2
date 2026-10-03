@@ -131,6 +131,7 @@ int main(int argc, char *argv[]) {
 				luaSound_init(L);
 				luaTimer_init(L);
 				luaSystem_init(L);
+				luaPhysics_init(L);
 
 
 				errored = luaL_dostring(L, reinterpret_cast<const char*>(script));

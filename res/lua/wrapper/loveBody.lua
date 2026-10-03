@@ -26,11 +26,11 @@ function loveBody:new(o)
 end
 
 function loveBody:getX()
-    return self.x
+    return Physics.getX(self.id)
 end
 
 function loveBody:getY()
-    return self.y
+    return Physics.getY(self.id)
 end
 
 function loveBody:getAngle()
@@ -38,13 +38,12 @@ function loveBody:getAngle()
 end
 
 function loveBody:setLinearDamping(ld)
+    Physics.setLinearDamping(self.id, ld)
     self.ld = ld
 end
 
 function loveBody:setMassFromShapes()
-    for i = 1, #self.shapes do
-        self.m = self.m + self.shapes[i]:getWidth() * self.shapes[i]:getHeight()
-    end
+    Physics.setMassFromShapes(self.id)
 end
 
 function loveBody:addShape(shape)
@@ -52,12 +51,46 @@ function loveBody:addShape(shape)
 end
 
 function loveBody:setBullet(status)
+    if(status == true) then
+        Physics.setBullet(self.id, 1)
+    else
+        Physics.setBullet(self.id, 0)
+    end
     self.isBullet = status
 end
 
 function loveBody:setLinearVelocity(lvx, lvy)
+    Physics.setLinearVelocity(self.id, lvx, lvy)
     self.lvx = lvx
     self.lvy = lvy
+end
+
+function loveBody:getLinearVelocity()
+    local x = Physics.getLinearVelocityX(self.id)
+    local y = Physics.getLinearVelocityY(self.id)
+    return x, y
+end
+
+function loveBody:applyForce(fx, fy, x, y)
+    Physics.applyForce(self.id, fx, fy, x, y)
+end
+
+function loveBody:getWorldCenter()
+    local x = Physics.getWorldCenterX(self.id)
+    local y = Physics.getWorldCenterY(self.id)
+    return x, y
+end
+
+function loveBody:getAngularVelocity()
+    return Physics.getAngularVelocity(self.id)
+end
+
+function loveBody:setAngularVelocity(angularVelocity)
+    return Physics.setAngularVelocity(self.id, angularVelocity)
+end
+
+function loveBody:applyTorque(torque)
+    Physics.applyTorque(self.id, torque)
 end
 
 return loveBody

@@ -80,10 +80,14 @@ local main = {
    whitelist = {},
 
    -- settings
-   musicno = 1,
+   musicno = 4,
    soundenabled = true,
    playerselection = 1,
-   oldmusicno = 1
+   oldmusicno = 1,
+   pause = false,
+
+   lineclearduration = 1.2,
+   cuttingtimer = 0
 }
 
 function main.load()
@@ -194,7 +198,7 @@ function main.load()
    gameno = 1 --
    selection = 1 --
    colorizeduration = 3 --seconds
-   lineclearduration = 1.2 --seconds
+   main.lineclearduration = 1.2 --seconds
    lineclearblinks = 7 --i
    linecleartreshold = 8.1 --in blocks
    densityupdateinterval = 1/30 --in seconds
@@ -296,7 +300,7 @@ function loadIngameSounds()
    main.newlevel:setVolume( 0.6 )
 end
 
-function loadMenuMusic()
+function loadMusicOptions()
    main.music = {}
 
    main.music[1] = love.audio.newSource( "sounds/themeA.ogg", "music1")
@@ -317,6 +321,9 @@ function loadMenuMusic()
    love.audio.play(main.music[3])
    love.audio.pause(main.music[3])
 
+end
+
+function loadTitleAndOptions()
    main.musictitle = love.audio.newSource( "sounds/titlemusic.ogg", "title")
    main.musictitle:setVolume( 0.6 )
    main.musictitle:setLooping( true )
@@ -328,6 +335,29 @@ function loadMenuMusic()
    main.musicoptions:setLooping( true )
    love.audio.play(main.musicoptions)
    love.audio.pause(main.musicoptions)
+end
+
+function loadMenuMusic()
+   loadMusicOptions()
+   loadTitleAndOptions()
+end
+
+function unloadMenuMusic()
+   -- if(main.musicno ~= 3) then
+   --   love.trace("unload music 3")
+   --   love.audio.stop(main.music[3])
+   -- end
+   -- if(main.musicno ~= 2) then
+   --   love.trace("unload music 2")
+   --   love.audio.stop(main.music[2])
+   -- end
+   -- if(main.musicno ~= 1) then
+   --   love.trace("unload music 1")
+   --   love.audio.stop(main.music[1])
+   -- end
+
+   love.audio.stop(main.musictitle)
+   love.audio.stop(main.musicoptions)
 end
 
 function loadimages()
@@ -463,18 +493,17 @@ function love.update(dt)
       return
    end
    
-   if cuttingtimer ~= 0 then
+   if main.cuttingtimer ~= 0 then
       dt = math.min(dt, minfps)
    end
-   
    if main.gamestate == "logo" or main.gamestate == "credits" or main.gamestate == "title" or main.gamestate == "menu" or main.gamestate == "multimenu" or main.gamestate == "highscoreentry" or main.gamestate == "options" then
       menu_update(dt)
    elseif main.gamestate == "gameA" or main.gamestate == "failingA" then
-      if pause == false then
+      if main.pause == false then
          gameA_update(dt)
       end
    elseif main.gamestate == "gameB" or main.gamestate == "failingB" then
-      if pause == false then
+      if main.pause == false then
          gameB_update(dt)
       end
       elseif main.gamestate == "gameBmulti" or main.gamestate == "failingBmulti" or main.gamestate == "failedBmulti" or main.gamestate == "gameBmulti_results" then
@@ -931,6 +960,7 @@ function love.keypressed( key )
       main.oldmusicno = main.musicno
       if controls.check("escape", key) then
          if main.musicno < 4 then
+            love.trace("pausing music" .. main.musicno .."because of escape" )
             love.audio.pause(main.music[main.musicno])
          end
          main.gamestate = "title"
@@ -944,8 +974,13 @@ function love.keypressed( key )
          if gameno == 1 then
             gameA.loadMain(main, love)
             gameA_load()
+            loadIngameSounds()
+            unloadMenuMusic()
          else
+            gameB.loadMain(main, love)
             gameB_load()
+            loadIngameSounds()
+            unloadMenuMusic()
          end
       elseif controls.check("left", key) then
          if selection == 2 or selection == 4 or selection == 6 then
@@ -992,10 +1027,12 @@ function love.keypressed( key )
       end
       if selection > 2 and not controls.check("escape", key) then
          main.musicno = selection - 2
+         love.trace("pause all music")
          love.audio.pause(main.music[1])
          love.audio.pause(main.music[2])
          love.audio.pause(main.music[3])
          if main.musicno < 4 then
+            love.trace("resume with " .. main.musicno)
             love.audio.resume(main.music[main.musicno])
          end
       elseif not controls.check("escape", key) then
@@ -1173,7 +1210,7 @@ function love.keypressed( key )
       if controls.check("return", key) then
          pause = not pause
 
-         if pause == true then
+         if main.pause == true then
             if main.musicno < 4 then
                love.audio.pause(music[main.musicno])
             end
@@ -1181,7 +1218,7 @@ function love.keypressed( key )
             love.audio.resume(main.pausesound)
          else
             if main.musicno < 4 then
-               love.audio.resume(music[main.musicno])
+               love.audio.resume(main.music[main.musicno])
             end
          end
       end
@@ -1189,18 +1226,21 @@ function love.keypressed( key )
          if controls.check("escape", key) then
             oldtime = love.timer.getTime()
             main.gamestate = "menu"
+            loadTitleAndOptions()
          end
          
-         if pause == false and (cuttingtimer == lineclearduration or main.gamestate == "gameB") then
+         if main.pause == false and (main.cuttingtimer == main.lineclearduration or main.gamestate == "gameB") then
             --if key == "up" then --STOP ROTATION OF BLOCK (makes it too easy..)
             --   tetribodies[counter]:setAngularVelocity(0)
             --end
             if controls.check("left", key) or controls.check("right", key) then
-               love.audio.pause(main.blockmove)
-               love.audio.resume(main.blockmove)
+               -- love.audio.pause(main.blockmove)
+               -- love.audio.resume(main.blockmove)
+               love.audio.play(main.blockmove)
             elseif controls.check("rotateleft", key) or controls.check("rotateright", key) then
-               love.audio.pause(main.blockturn)
-               love.audio.resume(main.blockturn)
+               --love.audio.pause(main.blockturn)
+               -- love.audio.resume(main.blockturn)
+               love.audio.play(main.blockturn)
             end
          end
       end
