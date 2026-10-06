@@ -597,12 +597,70 @@ static int lua_rect(lua_State *L) {
     return 0;
 }
 
+static int lua_drawimg_rotate(lua_State *L) {
+    int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+    if (argc != 4 && argc != 5)
+        return luaL_error(L, "wrong number of arguments");
+#endif
+#ifdef PARANOID
+    if (!draw_state)
+        return luaL_error(L, "drawRotateImage can't be called outside a blending phase.");
+#endif
+    float x = luaL_checknumber(L, 1);
+    float y = luaL_checknumber(L, 2);
+    texture* text = (texture*)(luaL_checkinteger(L, 3));
+    float radius = luaL_checknumber(L, 4);
+#ifndef SKIP_ERROR_HANDLING
+    if (text->magic != 0xABADBEEF)
+        return luaL_error(L, "attempt to access wrong memory block type.");
+#endif
+    if (argc == 5) {
+        uint32_t color = luaL_checkinteger(L, 5);
+        vita2d_draw_texture_tint_rotate(text->text, x, y, radius, color);
+    } else
+        vita2d_draw_texture_rotate(text->text, x, y, radius);
+    return 0;
+}
+
+static int lua_drawimg_rotatescale(lua_State *L)
+{
+    int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+    if (argc != 6 && argc != 7)
+        return luaL_error(L, "wrong number of arguments");
+#endif
+#ifdef PARANOID
+    if (!draw_state)
+        return luaL_error(L, "drawRotateScaleImage can't be called outside a blending phase.");
+#endif
+    float x = luaL_checknumber(L, 1);
+    float y = luaL_checknumber(L, 2);
+    texture* text = (texture*)(luaL_checkinteger(L, 3));
+    float radius = luaL_checknumber(L, 4);
+    float x_scale = luaL_checknumber(L, 5);
+    float y_scale = luaL_checknumber(L, 6);
+#ifndef SKIP_ERROR_HANDLING
+    if (text->magic != 0xABADBEEF)
+        return luaL_error(L, "attempt to access wrong memory block type.");
+#endif
+    if (argc == 7) {
+        uint32_t color = luaL_checkinteger(L, 7);
+        vita2d_draw_texture_tint_scale_rotate(text->text, x, y, x_scale, y_scale, radius, color);
+    } else
+        vita2d_draw_texture_scale_rotate(text->text, x, y, x_scale, y_scale, radius);
+    return 0;
+}
+
+
 
 //Register our Graphics Functions
 const luaL_Reg Graphics_functions[] = {
     {"debugPrint",          lua_print},
     {"drawPixel",           lua_pixel},
     {"drawScaleImage",      lua_drawimg_scale},
+    {"drawRotateImage",      lua_drawimg_rotate},
+    {"drawRotateScaleImage", lua_drawimg_rotatescale},
     {"createImage",         lua_create_image},
     {"getImageHeight",      lua_height},
     {"getImageWidth",       lua_width},

@@ -14,6 +14,17 @@
 // function set via Physics.setCallbacks.
 static std::unordered_map<uint32_t, int> g_collisionCallbackRefs;
 
+// LÖVE scales all spatial quantities by 1/meter before handing them to
+// Box2D, and scales them back up by meter on the way out. The game works in
+// pixel units (shapes are 32px wide, gravity is 500px/s^2, etc.), but Box2D
+// expects meters. Without this scaling the shapes are 30x too large, the mass
+// is ~900x too large (area scales with meter^2), and forces/torques become
+// negligible — which is why applyForce(70) had no visible effect.
+static const float PHYSICS_METER = 30.0f;
+
+static inline float scaleDown(float v) { return v / PHYSICS_METER; }
+static inline float scaleUp(float v) { return v * PHYSICS_METER; }
+
 int lua_initWorld(lua_State *L)
 {
     int argc = lua_gettop(L);
@@ -22,11 +33,11 @@ int lua_initWorld(lua_State *L)
         return luaL_error(L, "wrong number of arguments");
 #endif
 
-    unsigned int xg = luaL_checkinteger(L, 1);
-    unsigned int yg = luaL_checkinteger(L, 2);
+    float xg = static_cast<float>(luaL_checknumber(L, 1));
+    float yg = static_cast<float>(luaL_checknumber(L, 2));
     bool sleep = luaL_checkinteger(L, 3) == 1;
 
-    b2Vec2 b2_vec2{ .x = static_cast<float>(xg), .y = static_cast<float>(yg)};
+    b2Vec2 b2_vec2{ .x = scaleDown(xg), .y = scaleDown(yg) };
     b2WorldDef worldDef = b2DefaultWorldDef();
     worldDef.gravity = b2_vec2;
     auto b2_create_world = b2CreateWorld(&worldDef);
@@ -46,8 +57,8 @@ int lua_initBody(lua_State *L)
 
     uint64_t world = luaL_checkinteger(L, 1);
     auto b2_load_world_id = b2LoadWorldId(world);
-    int x = luaL_checkinteger(L, 2);
-    int y = luaL_checkinteger(L, 3);
+    float x = static_cast<float>(luaL_checknumber(L, 2));
+    float y = static_cast<float>(luaL_checknumber(L, 3));
 
     // The 4th argument selects the body type. LÖVE 0.7 passes a mass number
     // (0 = static, >0 = dynamic); LÖVE 0.8+ passes the string "static" or
@@ -79,7 +90,7 @@ int lua_initBody(lua_State *L)
 
     b2BodyDef body_def = b2DefaultBodyDef();
     body_def.type = body_type;
-    body_def.position = {static_cast<float>(x), static_cast<float>(y)};
+    body_def.position = {scaleDown(x), scaleDown(y)};
     body_def.rotation = b2MakeRot(angle);
 
     auto b2_body_id = b2CreateBody(b2_load_world_id, &body_def);
@@ -137,8 +148,8 @@ int lua_initPolygonShape(lua_State *L)
 
     for (size_t i = 0; i < vertex_count; i++) {
         b2Vec2 point;
-        point.x = static_cast<float>(int_vector[i * 2]);
-        point.y = static_cast<float>(int_vector[i * 2 + 1]);
+        point.x = scaleDown(static_cast<float>(int_vector[i * 2]));
+        point.y = scaleDown(static_cast<float>(int_vector[i * 2 + 1]));
         vertices.push_back(point);
     }
 
@@ -167,18 +178,18 @@ int lua_initRectableShape(lua_State *L)
 #endif
     uint64_t bodyId = (uint64_t) luaL_checknumber(L, 1);
     auto b2_load_body_id = b2LoadBodyId(bodyId);
-    int x = luaL_checkinteger(L, 2);
-    int y = luaL_checkinteger(L, 3);
-    b2Vec2 position = {static_cast<float>(x), static_cast<float>(y)};
+    float x = static_cast<float>(luaL_checknumber(L, 2));
+    float y = static_cast<float>(luaL_checknumber(L, 3));
+    b2Vec2 position = {scaleDown(x), scaleDown(y)};
 
-    int width = luaL_checkinteger(L, 4);
-    int height = luaL_checkinteger(L, 5);
+    float width = static_cast<float>(luaL_checknumber(L, 4));
+    float height = static_cast<float>(luaL_checknumber(L, 5));
 
     float angle = static_cast<float>(luaL_checknumber(L, 6));
     b2Rot rotation = b2MakeRot(angle);
 
     // LÖVE passes full width/height; b2MakeOffsetBox takes half-extents.
-    b2Polygon b2_offset_box = b2MakeOffsetBox(width / 2.0f, height / 2.0f, position, rotation);
+    b2Polygon b2_offset_box = b2MakeOffsetBox(scaleDown(width) / 2.0f, scaleDown(height) / 2.0f, position, rotation);
 
     b2ShapeDef shape_def = b2DefaultShapeDef();
     shape_def.enableContactEvents = true;
@@ -235,7 +246,7 @@ int lua_update(lua_State *L)
             lua_pcall(L, 2, 0, 0);
         }
     }
-    return 1;
+    return 0;
 }
 
 int lua_drawWorld(lua_State *L)
@@ -247,15 +258,20 @@ int lua_drawWorld(lua_State *L)
         return luaL_error(L, "wrong number of arguments");
     }
 #endif
-    uint32_t b2_world_id = luaL_checkinteger(L, 1);
+    auto b2_world_id = luaL_checkinteger(L, 1);
     auto b2_load_world_id = b2LoadWorldId(b2_world_id);
     float scale = static_cast<float>(luaL_checknumber(L, 2));
+
+    // Box2D coordinates are in meters (scaled down by PHYSICS_METER), while
+    // the Lua-side physicsscale converts the game's internal pixel space to
+    // screen pixels. Multiply both to go from meters to screen pixels.
+    float draw_scale = scale * PHYSICS_METER;
 
     b2DebugDraw debugDraw = b2DefaultDebugDraw();
     debugDraw.DrawPolygonFcn = vita2d_debug_draw::vita2dDrawPolygonFcn;
     debugDraw.DrawSolidPolygonFcn = vita2d_debug_draw::vita2dDrawSolidPolygonFcn;
     debugDraw.drawShapes = true;
-    debugDraw.context = &scale;
+    debugDraw.context = &draw_scale;
 
 
     b2World_Draw(b2_load_world_id, &debugDraw);
@@ -271,12 +287,12 @@ int lua_getX(lua_State *L)
         return luaL_error(L, "wrong number of arguments");
     }
 #endif
-    uint64_t b2_body_id = static_cast<uint64_t>(luaL_checknumber(L, 1));
+    auto b2_body_id = static_cast<uint64_t>(luaL_checknumber(L, 1));
     auto b2_load_body_id = b2LoadBodyId(b2_body_id);
 
     auto b2_body_get_position = b2Body_GetPosition(b2_load_body_id);
 
-    lua_pushnumber(L, b2_body_get_position.x);
+    lua_pushnumber(L, scaleUp(b2_body_get_position.x));
     return 1;
 }
 
@@ -289,12 +305,12 @@ int lua_getY(lua_State *L)
         return luaL_error(L, "wrong number of arguments");
     }
 #endif
-    uint64_t b2_body_id = static_cast<uint64_t>(luaL_checknumber(L, 1));
+    auto b2_body_id = static_cast<uint64_t>(luaL_checknumber(L, 1));
     auto b2_load_body_id = b2LoadBodyId(b2_body_id);
 
     auto b2_body_get_position = b2Body_GetPosition(b2_load_body_id);
 
-    lua_pushnumber(L, b2_body_get_position.y);
+    lua_pushnumber(L, scaleUp(b2_body_get_position.y));
     return 1;
 }
 
@@ -307,7 +323,7 @@ int lua_getAngle(lua_State *L)
         return luaL_error(L, "wrong number of arguments");
     }
 #endif
-    uint64_t b2_body_id = static_cast<uint64_t>(luaL_checknumber(L, 1));
+    auto b2_body_id = static_cast<uint64_t>(luaL_checknumber(L, 1));
     auto b2_load_body_id = b2LoadBodyId(b2_body_id);
 
     b2Rot rotation = b2Body_GetRotation(b2_load_body_id);
@@ -324,7 +340,7 @@ int lua_getMass(lua_State *L)
         return luaL_error(L, "wrong number of arguments");
     }
 #endif
-    uint64_t b2_body_id = static_cast<uint64_t>(luaL_checknumber(L, 1));
+    auto b2_body_id = static_cast<uint64_t>(luaL_checknumber(L, 1));
     auto b2_load_body_id = b2LoadBodyId(b2_body_id);
 
     lua_pushnumber(L, b2Body_GetMass(b2_load_body_id));
@@ -340,15 +356,15 @@ int lua_setLinearVelocity(lua_State *L)
         return luaL_error(L, "wrong number of arguments");
     }
 #endif
-    u_int64_t b2_body_id = static_cast<u_int64_t>(luaL_checknumber(L, 1));
+    auto b2_body_id = static_cast<u_int64_t>(luaL_checknumber(L, 1));
     b2BodyId body_id = b2LoadBodyId(b2_body_id);
     b2Vec2 b2_linear_velocity = b2Vec2 {
-        .x = static_cast<float>(luaL_checknumber(L, 2)),
-        .y = static_cast<float>(luaL_checknumber(L, 3))
+        .x = scaleDown(static_cast<float>(luaL_checknumber(L, 2))),
+        .y = scaleDown(static_cast<float>(luaL_checknumber(L, 3)))
     };
 
     b2Body_SetLinearVelocity(body_id, b2_linear_velocity);
-    return 1;
+    return 0;
 }
 
 int lua_setLinearDamping(lua_State *L)
@@ -360,12 +376,12 @@ int lua_setLinearDamping(lua_State *L)
         return luaL_error(L, "wrong number of arguments");
     }
 #endif
-    u_int64_t b2_body_id = static_cast<u_int64_t>(luaL_checknumber(L, 1));
+    auto b2_body_id = static_cast<u_int64_t>(luaL_checknumber(L, 1));
     b2BodyId body_id = b2LoadBodyId(b2_body_id);
-    float linear_damping = static_cast<float>(luaL_checknumber(L, 2));
+    auto linear_damping = static_cast<float>(luaL_checknumber(L, 2));
 
     b2Body_SetLinearDamping(body_id, linear_damping);
-    return 1;
+    return 0;
 }
 
 int lua_setMassFromShapes(lua_State *L)
@@ -377,7 +393,7 @@ int lua_setMassFromShapes(lua_State *L)
         return luaL_error(L, "wrong number of arguments");
     }
 #endif
-    u_int64_t b2_body_id = static_cast<u_int64_t>(luaL_checknumber(L, 1));
+    auto b2_body_id = static_cast<u_int64_t>(luaL_checknumber(L, 1));
     b2BodyId body_id = b2LoadBodyId(b2_body_id);
 
     // In LÖVE 0.7, bodies are created with mass 0 (static). Calling
@@ -386,7 +402,7 @@ int lua_setMassFromShapes(lua_State *L)
     // type explicitly here.
     b2Body_SetType(body_id, b2_dynamicBody);
     b2Body_ApplyMassFromShapes(body_id);
-    return 1;
+    return 0;
 }
 
 int lua_setBullet(lua_State *L)
@@ -398,12 +414,12 @@ int lua_setBullet(lua_State *L)
         return luaL_error(L, "wrong number of arguments");
     }
 #endif
-    u_int64_t b2_body_id = static_cast<u_int64_t>(luaL_checknumber(L, 1));
+    auto b2_body_id = static_cast<u_int64_t>(luaL_checknumber(L, 1));
     b2BodyId body_id = b2LoadBodyId(b2_body_id);
     bool bullet = static_cast<bool>(luaL_checknumber(L, 2));
 
     b2Body_SetBullet(body_id, bullet);
-    return 1;
+    return 0;
 }
 
 int lua_getWorldCenterX(lua_State *L)
@@ -415,11 +431,11 @@ int lua_getWorldCenterX(lua_State *L)
         return luaL_error(L, "wrong number of arguments");
     }
 #endif
-    u_int64_t b2_body_id = static_cast<u_int64_t>(luaL_checknumber(L, 1));
+    auto b2_body_id = static_cast<u_int64_t>(luaL_checknumber(L, 1));
     b2BodyId body_id = b2LoadBodyId(b2_body_id);
 
     auto b2_body_get_world_center_of_mass = b2Body_GetWorldCenterOfMass(body_id);
-    lua_pushnumber(L, b2_body_get_world_center_of_mass.x);
+    lua_pushnumber(L, scaleUp(b2_body_get_world_center_of_mass.x));
     return 1;
 }
 
@@ -432,11 +448,11 @@ int lua_getWorldCenterY(lua_State *L)
         return luaL_error(L, "wrong number of arguments");
     }
 #endif
-    u_int64_t b2_body_id = static_cast<u_int64_t>(luaL_checknumber(L, 1));
+    auto b2_body_id = static_cast<u_int64_t>(luaL_checknumber(L, 1));
     b2BodyId body_id = b2LoadBodyId(b2_body_id);
 
     auto b2_body_get_world_center_of_mass = b2Body_GetWorldCenterOfMass(body_id);
-    lua_pushnumber(L, b2_body_get_world_center_of_mass.y);
+    lua_pushnumber(L, scaleUp(b2_body_get_world_center_of_mass.y));
     return 1;
 }
 
@@ -449,15 +465,16 @@ int lua_applyForce(lua_State *L)
         return luaL_error(L, "wrong number of arguments");
     }
 #endif
-    u_int64_t b2_body_id = static_cast<u_int64_t>(luaL_checknumber(L, 1));
+    auto b2_body_id = static_cast<u_int64_t>(luaL_checknumber(L, 1));
     b2BodyId body_id = b2LoadBodyId(b2_body_id);
 
-    float fx = static_cast<float>(luaL_checknumber(L, 2));
-    float fy = static_cast<float>(luaL_checknumber(L, 3));
-    float x = static_cast<float>(luaL_checknumber(L, 4));
-    float y = static_cast<float>(luaL_checknumber(L, 5));
-    b2Body_ApplyForce(body_id, b2Vec2{fx, fy}, b2Vec2{x, y}, true);
-    return 1;
+    auto fx = static_cast<float>(luaL_checknumber(L, 2));
+    auto fy = static_cast<float>(luaL_checknumber(L, 3));
+    auto x = static_cast<float>(luaL_checknumber(L, 4));
+    auto y = static_cast<float>(luaL_checknumber(L, 5));
+
+    b2Body_ApplyForce(body_id, b2Vec2{.x = fx, .y = fy}, b2Vec2{.x = scaleDown(x), .y = scaleDown(y)}, true);
+    return 0;
 }
 
 int lua_getLinearVelocityX(lua_State *L)
@@ -469,11 +486,11 @@ int lua_getLinearVelocityX(lua_State *L)
         return luaL_error(L, "wrong number of arguments");
     }
 #endif
-    u_int64_t b2_body_id = static_cast<u_int64_t>(luaL_checknumber(L, 1));
+    auto b2_body_id = static_cast<u_int64_t>(luaL_checknumber(L, 1));
     b2BodyId body_id = b2LoadBodyId(b2_body_id);
 
     auto b2_body_get_linear_velocity = b2Body_GetLinearVelocity(body_id);
-    lua_pushnumber(L, b2_body_get_linear_velocity.x);
+    lua_pushnumber(L, scaleUp(b2_body_get_linear_velocity.x));
     return 1;
 }
 
@@ -486,11 +503,11 @@ int lua_getLinearVelocityY(lua_State *L)
         return luaL_error(L, "wrong number of arguments");
     }
 #endif
-    u_int64_t b2_body_id = static_cast<u_int64_t>(luaL_checknumber(L, 1));
+    auto b2_body_id = static_cast<u_int64_t>(luaL_checknumber(L, 1));
     b2BodyId body_id = b2LoadBodyId(b2_body_id);
 
     auto b2_body_get_linear_velocity = b2Body_GetLinearVelocity(body_id);
-    lua_pushnumber(L, b2_body_get_linear_velocity.y);
+    lua_pushnumber(L, scaleUp(b2_body_get_linear_velocity.y));
     return 1;
 }
 
@@ -503,7 +520,7 @@ int lua_getAngularVelocity(lua_State *L)
         return luaL_error(L, "wrong number of arguments");
     }
 #endif
-    u_int64_t b2_body_id = static_cast<u_int64_t>(luaL_checknumber(L, 1));
+    auto b2_body_id = static_cast<u_int64_t>(luaL_checknumber(L, 1));
     b2BodyId body_id = b2LoadBodyId(b2_body_id);
 
     auto b2_body_get_linear_velocity = b2Body_GetAngularVelocity(body_id);
@@ -520,12 +537,12 @@ int lua_setAngularVelocity(lua_State *L)
         return luaL_error(L, "wrong number of arguments");
     }
 #endif
-    u_int64_t b2_body_id = static_cast<u_int64_t>(luaL_checknumber(L, 1));
+    auto b2_body_id = static_cast<u_int64_t>(luaL_checknumber(L, 1));
     b2BodyId body_id = b2LoadBodyId(b2_body_id);
-    float angular_velocity = static_cast<float>(luaL_checknumber(L, 2));
+    auto angular_velocity = static_cast<float>(luaL_checknumber(L, 2));
 
     b2Body_SetAngularVelocity(body_id, angular_velocity);
-    return 1;
+    return 0;
 }
 
 int lua_applyTorque(lua_State *L)
@@ -537,12 +554,12 @@ int lua_applyTorque(lua_State *L)
         return luaL_error(L, "wrong number of arguments");
     }
 #endif
-    u_int64_t b2_body_id = static_cast<u_int64_t>(luaL_checknumber(L, 1));
+    auto b2_body_id = static_cast<u_int64_t>(luaL_checknumber(L, 1));
     b2BodyId body_id = b2LoadBodyId(b2_body_id);
-    float torque = static_cast<float>(luaL_checknumber(L, 2));
+    auto torque = static_cast<float>(luaL_checknumber(L, 2));
 
     b2Body_ApplyTorque(body_id, torque, true);
-    return 1;
+    return 0;
 }
 
 int lua_setCallbacks(lua_State *L)
@@ -573,7 +590,7 @@ int lua_setCallbacks(lua_State *L)
     int ref = luaL_ref(L, LUA_REGISTRYINDEX);
     g_collisionCallbackRefs[b2_world_id] = ref;
 
-    return 1;
+    return 0;
 }
 
 int lua_setShapeData(lua_State *L)
@@ -593,7 +610,7 @@ int lua_setShapeData(lua_State *L)
     // pointer so it can be retrieved during collision callbacks.
     int ref = luaL_ref(L, LUA_REGISTRYINDEX);
     b2Shape_SetUserData(shape_id, (void*)(intptr_t)ref);
-    return 1;
+    return 0;
 }
 
 int lua_getPoints(lua_State *L)
@@ -617,10 +634,10 @@ int lua_getPoints(lua_State *L)
     for (int i = 0; i < size; i++) {
         if (i % 2 == 0)
         {
-            lua_pushnumber(L, b2_shape_get_polygon.vertices[i].x);
+            lua_pushnumber(L, scaleUp(b2_shape_get_polygon.vertices[i].x));
         } else if (i % 2 == 1)
         {
-            lua_pushnumber(L, b2_shape_get_polygon.vertices[i].y);
+            lua_pushnumber(L, scaleUp(b2_shape_get_polygon.vertices[i].y));
         }
 
         // Pops the number from the top and assigns it to table[i + 1]
@@ -628,6 +645,24 @@ int lua_getPoints(lua_State *L)
         lua_rawseti(L, -2, i + 1);
     }
     return 1;
+}
+
+int lua_setFriction(lua_State *L)
+{
+    int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+    if (argc != 2)
+    {
+        return luaL_error(L, "wrong number of arguments");
+    }
+#endif
+    auto shape_id = static_cast<uint64_t>(luaL_checknumber(L, 1));
+    b2ShapeId b2_shape_Id = b2LoadShapeId(shape_id);
+    auto friction = static_cast<float>(luaL_checknumber(L, 2));
+
+    b2Shape_SetFriction(b2_shape_Id, friction);
+
+    return 0;
 }
 
 //Register our Phsysics functions
@@ -657,6 +692,7 @@ const luaL_Reg Physics_functions[] = {
     {"setShapeData",          lua_setShapeData},
     {"applyTorque",         lua_applyTorque},
     {"getPoints",         lua_getPoints},
+    {"setFriction",         lua_setFriction},
     {0, 0}
 };
 

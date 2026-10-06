@@ -23,6 +23,7 @@ function lovePolygonShape:setData(v)
 end
 
 function lovePolygonShape:setFriction(friction)
+    Physics.setFriction(self.id, friction)
     self.friction = friction
 end
 

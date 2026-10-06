@@ -211,7 +211,7 @@ function main.load()
    blockstartY = -64 --where new blocks are created
    losingY = 0 --lose if block 1 collides above this line
    blockmass = 5 --probably obsolete because body:setMassFromShapes()
-   blockrot = 10
+   blockrot = 0
    blockrestitution = 0.1
    minmass = 1
 

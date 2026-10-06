@@ -414,12 +414,22 @@ function love.graphics.draw(drawable, x, y, angle, scale_x, scale_y, offset_x, o
     local imageId = drawable.id
 
     local pixel_scale = drawable.pixelScale or 1
+    local eff_scale_x = scale_x * pixel_scale * stretch_x
+    local eff_scale_y = scale_y * pixel_scale * stretch_y
     local screen_x = (x + love.coordinateSystemTranslation.x + offset_x) * stretch_x
     local screen_y = (y + love.coordinateSystemTranslation.y + offset_y) * stretch_y
 
+    -- drawRotateScaleImage centers the texture on (x, y), but LÖVE's
+    -- love.graphics.draw treats (x, y) as the top-left corner. Shift by half
+    -- the scaled dimensions so the center lands where the top-left should be.
+    local half_w = Graphics.getImageWidth(imageId) * 0.5 * eff_scale_x
+    local half_h = Graphics.getImageHeight(imageId) * 0.5 * eff_scale_y
+    screen_x = screen_x + half_w
+    screen_y = screen_y + half_h
+
     love.beginBlend()
-    Graphics.drawScaleImage(screen_x, screen_y, imageId,
-        scale_x * pixel_scale * stretch_x, scale_y * pixel_scale * stretch_y)
+    Graphics.drawRotateScaleImage(screen_x, screen_y, imageId,
+        angle, eff_scale_x, eff_scale_y)
     love.endBlend()
 end
 
