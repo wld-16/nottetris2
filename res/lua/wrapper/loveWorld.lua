@@ -15,19 +15,19 @@ function loveWorld:new(o)
     o = o or {}
     setmetatable(o, self)
     self.__index = self
-    self.id = o.id
-    self.x1 = o.x1
-    self.y1 = o.y1
-    self.x2 = o.x2
-    self.y2 = o.y2
-    self.xg = o.xg
-    self.yg = o.yg
-    self.sleep = o.sleep
+    o.id = o.id
+    o.x1 = o.x1
+    o.y1 = o.y1
+    o.x2 = o.x2
+    o.y2 = o.y2
+    o.xg = o.xg
+    o.yg = o.yg
+    o.sleep = o.sleep
     return o
 end
 
 function loveWorld:setCallbacks(callbacks)
-    self.callbacks = callbacks
+    Physics.setCallbacks(self.id, callbacks)
 end
 
 function loveWorld:update(dt)

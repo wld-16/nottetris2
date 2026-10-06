@@ -17,10 +17,10 @@ function loveSound:new(o)
 	o = o or {}
 	setmetatable(o, self)
 	self.__index = self
-	self.id = o.id
-	self.volume = o.volume
-	self.isLooping = o.isLooping
-	self.name = o.name
+	o.id = o.id
+	o.volume = o.volume
+	o.isLooping = o.isLooping
+	o.name = o.name
 	return o
 end
 

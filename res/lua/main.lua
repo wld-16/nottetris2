@@ -1212,7 +1212,7 @@ function love.keypressed( key )
 
          if main.pause == true then
             if main.musicno < 4 then
-               love.audio.pause(music[main.musicno])
+               love.audio.pause(main.music[main.musicno])
             end
             love.audio.pause(main.pausesound)
             love.audio.resume(main.pausesound)

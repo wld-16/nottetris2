@@ -188,6 +188,9 @@ function gameA_draw()
 		end
 	end
 	
+	--DEBUG: draw Box2D shape outlines on top of the pieces
+	Physics.drawWorld(world.id, physicsscale)
+	
 	love.graphics.setColor(255, 255, 255)
 	--Next piece
 	if main.pause == false then

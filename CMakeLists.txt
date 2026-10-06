@@ -98,6 +98,8 @@ add_executable(${PROJECT_NAME}
         src/timer.cpp
         src/system.cpp
         src/physics.cpp
+        src/vita2d_debug_draw.cpp
+        src/vita2d_debug_draw.h
 )
 
 # Library to link to (drop the -l prefix). This will mostly be stubs.

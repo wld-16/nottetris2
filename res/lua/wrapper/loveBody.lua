@@ -16,12 +16,13 @@ function loveBody:new(o)
     o = o or {}
     setmetatable(o, self)
     self.__index = self
-    self.id = o.id or 0
-    self.world = o.world
-    self.x = o.x or 0
-    self.y = o.y or 0
-    self.m = o.m or 0
-    self.i = o.i or 0
+    o.id = o.id or 0
+    o.world = o.world
+    o.x = o.x or 0
+    o.y = o.y or 0
+    o.m = o.m or 0
+    o.i = o.i or 0
+    o.shapes = {}
     return o
 end
 
@@ -34,7 +35,11 @@ function loveBody:getY()
 end
 
 function loveBody:getAngle()
-    return 0
+    return Physics.getAngle(self.id)
+end
+
+function loveBody:getMass()
+    return Physics.getMass(self.id)
 end
 
 function loveBody:setLinearDamping(ld)
