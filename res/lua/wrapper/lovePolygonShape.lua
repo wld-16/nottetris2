@@ -67,4 +67,8 @@ function lovePolygonShape:getPoints()
     end
 end
 
+function lovePolygonShape:testSegment( x1, y1, x2, y2)
+    return Physics.testSegment(self.id, x1, y1, x2, y2)
+end
+
 return lovePolygonShape

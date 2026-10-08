@@ -347,9 +347,11 @@ end
 
 function love.graphics.print(text, x, y, r, scale_x, scale_y)
     local fontId = love.env.activeFont.id
-    local stretch_x, stretch_y = love.graphics.getScreenScale()
+    local eff_scale_x = scale_x or 1
+    local eff_scale_y = scale_y or eff_scale_x
+    -- local stretch_x, stretch_y = love.graphics.getScreenScale()
     love.beginBlend()
-    Font.imageFontPrint(fontId, text, x * stretch_x, y * stretch_y, 3 * stretch_x, 3 * stretch_y)
+    Font.imageFontPrint(fontId, text, x, y, eff_scale_x, eff_scale_y)
     love.endBlend()
 end
 
@@ -405,19 +407,20 @@ function love.graphics.resetTransform()
 end
 
 function love.graphics.draw(drawable, x, y, angle, scale_x, scale_y, offset_x, offset_y)
-    local stretch_x, stretch_y = love.graphics.getScreenScale()
+    -- local stretch_x, stretch_y = love.graphics.getScreenScale()
     scale_x = scale_x or 1
     scale_y = scale_y or scale_x
     offset_x = offset_x or 0
     offset_y = offset_y or 0
+    angle = angle or 0
 
     local imageId = drawable.id
 
     local pixel_scale = drawable.pixelScale or 1
-    local eff_scale_x = scale_x * pixel_scale * stretch_x
-    local eff_scale_y = scale_y * pixel_scale * stretch_y
-    local screen_x = (x + love.coordinateSystemTranslation.x + offset_x) * stretch_x
-    local screen_y = (y + love.coordinateSystemTranslation.y + offset_y) * stretch_y
+    local eff_scale_x = scale_x * pixel_scale
+    local eff_scale_y = scale_y * pixel_scale
+    local screen_x = (x + love.coordinateSystemTranslation.x - offset_x)
+    local screen_y = (y + love.coordinateSystemTranslation.y - offset_y)
 
     -- drawRotateScaleImage centers the texture on (x, y), but LÖVE's
     -- love.graphics.draw treats (x, y) as the top-left corner. Shift by half

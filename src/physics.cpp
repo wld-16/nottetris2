@@ -665,6 +665,40 @@ int lua_setFriction(lua_State *L)
     return 0;
 }
 
+int lua_testSegment(lua_State *L)
+{
+    int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+    if (argc != 5)
+    {
+        return luaL_error(L, "wrong number of arguments");
+    }
+#endif
+    auto shape_id = static_cast<uint64_t>(luaL_checknumber(L, 1));
+    b2ShapeId b2_shape_id = b2LoadShapeId(shape_id);
+
+    float x1 = static_cast<float>(luaL_checknumber(L, 2));
+    float y1 = static_cast<float>(luaL_checknumber(L, 3));
+    float x2 = static_cast<float>(luaL_checknumber(L, 4));
+    float y2 = static_cast<float>(luaL_checknumber(L, 5));
+
+    b2RayCastInput input;
+    input.origin = {scaleDown(x1), scaleDown(y1)};
+    input.translation = {scaleDown(x2 - x1), scaleDown(y2 - y1)};
+    input.maxFraction = 1.0f;
+
+    b2CastOutput output = b2Shape_RayCast(b2_shape_id, &input);
+
+    if (output.hit)
+    {
+        lua_pushnumber(L, static_cast<lua_Number>(output.fraction));
+        return 1;
+    }
+
+    lua_pushnil(L);
+    return 1;
+}
+
 //Register our Phsysics functions
 const luaL_Reg Physics_functions[] = {
     {"newWorld",            lua_initWorld },
@@ -693,6 +727,7 @@ const luaL_Reg Physics_functions[] = {
     {"applyTorque",         lua_applyTorque},
     {"getPoints",         lua_getPoints},
     {"setFriction",         lua_setFriction},
+    {"testSegment",        lua_testSegment},
     {0, 0}
 };
 

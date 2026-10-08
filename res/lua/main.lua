@@ -85,6 +85,8 @@ local main = {
    playerselection = 1,
    oldmusicno = 1,
    pause = false,
+   musicvolume = 0.6,
+   soundvolume = 1,
 
    lineclearduration = 1.2,
    cuttingtimer = 0
@@ -208,6 +210,9 @@ function main.load()
    startdelaytime = 0
    density = 0.1
 
+   main.musicvolume = 0.6
+   main.soundvolume = 1
+
    blockstartY = -64 --where new blocks are created
    losingY = 0 --lose if block 1 collides above this line
    blockmass = 5 --probably obsolete because body:setMassFromShapes()
@@ -255,31 +260,31 @@ end
 
 function loadHighscoreMusic()
    main.musichighscore = love.audio.newSource( "sounds/highscoremusic.ogg", "highscore")
-   main.musichighscore:setVolume( 0.6 )
+   main.musichighscore:setVolume( main.musicvolume)
    main.musichighscore:setLooping( true )
    love.audio.play(main.musichighscore)
    love.audio.pause(main.musichighscore)
 
    main.musicrocket4 = love.audio.newSource( "sounds/rocket4.ogg", "rocket4")
-   main.musicrocket4:setVolume( 0.6 )
+   main.musicrocket4:setVolume( main.musicvolume)
    main.musicrocket4:setLooping( false )
    love.audio.play(main.musicrocket4)
    love.audio.pause(main.musicrocket4)
 
    main.musicrocket1to3 = love.audio.newSource( "sounds/rocket1to3.ogg", "rocket1to3")
-   main.musicrocket1to3:setVolume( 0.6 )
+   main.musicrocket1to3:setVolume( main.musicvolume)
    main.musicrocket1to3:setLooping( false )
    love.audio.play(main.musicrocket1to3)
    love.audio.pause(main.musicrocket1to3)
 
    main.musicresults = love.audio.newSource( "sounds/resultsmusic.ogg", "results")
-   main.musicresults:setVolume( 1 )
+   main.musicresults:setVolume( main.soundvolume )
    main.musicresults:setLooping( false )
    love.audio.play(main.musicresults)
    love.audio.pause(main.musicresults)
 
    main.highscoreintro = love.audio.newSource( "sounds/highscoreintro.ogg", "highscoreIntro")
-   main.highscoreintro:setVolume( 0.6 )
+   main.highscoreintro:setVolume( main.musicvolume)
    main.highscoreintro:setLooping( false )
    love.audio.play(main.highscoreintro)
    love.audio.pause(main.highscoreintro)
@@ -288,35 +293,53 @@ end
 
 function loadIngameSounds()
    main.blockfall = love.audio.newSource( "sounds/blockfall.ogg", "fall")
+   main.blockfall:setVolume( main.soundvolume )
+
    main.blockturn = love.audio.newSource( "sounds/turn.ogg", "turn")
+   main.blockturn:setVolume(main.soundvolume)
+
    main.blockmove = love.audio.newSource( "sounds/move.ogg", "move")
+   main.blockmove:setVolume(main.soundvolume)
+
    main.lineclear = love.audio.newSource( "sounds/lineclear.ogg", "clear")
+   main.lineclear:setVolume(main.soundvolume)
+
    main.fourlineclear = love.audio.newSource( "sounds/4lineclear.ogg", "fourlineclear")
+   main.fourlineclear:setVolume(main.soundvolume)
+
    main.gameover1 = love.audio.newSource( "sounds/gameover1.ogg", "gameover1")
+   main.gameover1:setVolume(main.soundvolume)
+
    main.gameover2 = love.audio.newSource( "sounds/gameover2.ogg", "gameover2")
+   main.gameover2:setVolume(main.soundvolume)
+
    main.pausesound = love.audio.newSource( "sounds/pause.ogg", "pause")
+   main.pausesound:setVolume(main.soundvolume)
+
    main.highscorebeep = love.audio.newSource( "sounds/highscorebeep.ogg", "beep")
+   main.highscorebeep:setVolume(main.soundvolume)
+
    main.newlevel = love.audio.newSource( "sounds/newlevel.ogg", "newlevel")
-   main.newlevel:setVolume( 0.6 )
+   main.newlevel:setVolume( main.musicvolume)
 end
 
 function loadMusicOptions()
    main.music = {}
 
    main.music[1] = love.audio.newSource( "sounds/themeA.ogg", "music1")
-   main.music[1]:setVolume( 0.6 )
+   main.music[1]:setVolume( main.musicvolume)
    main.music[1]:setLooping( true )
    love.audio.play(main.music[1])
    love.audio.pause(main.music[1])
 
    main.music[2] = love.audio.newSource( "sounds/themeB.ogg", "music2")
-   main.music[2]:setVolume( 0.6 )
+   main.music[2]:setVolume( main.musicvolume)
    main.music[2]:setLooping( true )
    love.audio.play(main.music[2])
    love.audio.pause(main.music[2])
 
    main.music[3] = love.audio.newSource( "sounds/themeC.ogg", "music3")
-   main.music[3]:setVolume( 0.6 )
+   main.music[3]:setVolume( main.musicvolume)
    main.music[3]:setLooping( true )
    love.audio.play(main.music[3])
    love.audio.pause(main.music[3])
@@ -325,13 +348,13 @@ end
 
 function loadTitleAndOptions()
    main.musictitle = love.audio.newSource( "sounds/titlemusic.ogg", "title")
-   main.musictitle:setVolume( 0.6 )
+   main.musictitle:setVolume( main.musicvolume)
    main.musictitle:setLooping( true )
    love.audio.play(main.musictitle)
    love.audio.pause(main.musictitle)
 
    main.musicoptions = love.audio.newSource( "sounds/musicoptions.ogg", "options")
-   main.musicoptions:setVolume( 1 )
+   main.musicoptions:setVolume( main.soundvolume )
    main.musicoptions:setLooping( true )
    love.audio.play(main.musicoptions)
    love.audio.pause(main.musicoptions)
@@ -616,27 +639,8 @@ function scaleImagedata(imagedata, i)
 end
 
 function changevolume(i)
-   main.music[1]:setVolume( 0.6*i )
-   main.music[2]:setVolume( 0.6*i )
-   main.music[3]:setVolume( 0.6*i )
-   main.musictitle:setVolume( 0.6*i )
-   main.musichighscore:setVolume( 0.6*i )
-   main.musicrocket4:setVolume( 0.6*i )
-   main.musicrocket1to3:setVolume( 0.6*i )
-   main.musicresults:setVolume( i )
-   main.highscoreintro:setVolume( 0.6*i )
-   main.musicoptions:setVolume( i )
-   main.boot:setVolume( i )
-   main.blockfall:setVolume( i )
-   main.blockturn:setVolume( i )
-   main.blockmove:setVolume( i )
-   main.lineclear:setVolume( i )
-   main.fourlineclear:setVolume( i )
-   main.gameover1:setVolume( i )
-   main.gameover2:setVolume( i )
-   main.pausesound:setVolume( i )
-   main.highscorebeep:setVolume( i )
-   main.newlevel:setVolume( 0.6*i )
+   main.musicvolume = 0.6 * i
+   main.soundvolume = i
 end
 
 function loadoptions()
