@@ -1,4 +1,5 @@
 local controls = require 'controls'
+local failed = require 'failed'
 
 local gameA = {}
 
@@ -171,7 +172,7 @@ function gameA_draw()
 		--blinky lines
 		
 		local section = math.ceil(main.cuttingtimer/(main.lineclearduration/lineclearblinks))
-		if math.mod(section, 2) == 1 or main.cuttingtimer == 0 then
+		if section % 2 == 1 or main.cuttingtimer == 0 then
 		
 			local rr, rg, rb = unpack(getrainbowcolor(hue))
 			local r = 145 + rr*64
@@ -240,7 +241,7 @@ function gameA_draw()
 		end
 		
 		love.graphics.setColor(color, color, color)
-		-- love.graphics.rectangle("fill", 0, (i-1)*8*scale, math.floor(6*scale *fullness), 8*scale)
+		love.graphics.rectangle("fill", 0, (i-1)*8*scale, math.floor(6*scale *fullness), 8*scale)
 	end
 	
 	love.graphics.setColor(255, 255, 255)
@@ -395,6 +396,9 @@ function gameA_update(dt)
 		end
 		
 		if clearcheck then
+			failed.loadMain(main, love)
+			main.unloadGameMusic()
+			main.loadHighscoreMusic()
 			failed_load()
 		end
 	end
@@ -413,6 +417,7 @@ function getintersectX(shape, y) --returns left and right collision points to a 
 end
 
 function removeline(lineno) --Does all necessary things to clear a line. Refineshape and cutimage included.
+	love.trace("removeline: " .. lineno)
 	upperline = (lineno - 1) * 32
 	lowerline = lineno * 32
 	globaline = lineno
@@ -552,16 +557,33 @@ function removeline(lineno) --Does all necessary things to clear a line. Refines
 				
 				--All shapes have now an assigned group number in "shapegroups[shape] = groupnumber" :) yay.
 				
+				--Cache original body properties before destruction. The body is
+				--destroyed in the a==1 iteration, so all reads must happen first.
+				local old_x = tetribodies[i-ioffset]:getX()
+				local old_y = tetribodies[i-ioffset]:getY()
+				local old_mass = tetribodies[i-ioffset]:getMass()
+				local old_angle = tetribodies[i-ioffset]:getAngle()
+				local old_velx, old_vely = tetribodies[i-ioffset]:getLinearVelocity()
+				local old_angvel = tetribodies[i-ioffset]:getAngularVelocity()
+
+				--Cache world coordinates of each tetrishapescopy shape before the
+				--body is destroyed. After destruction the shape IDs are invalid in
+				--Box2D v3, so getPoints2table would crash on the a>=2 iterations.
+				local cached_coords = {}
+				for b, c in pairs(tetrishapescopy) do
+					cached_coords[b] = getPoints2table(tetrishapescopy[b])
+				end
+
 				for a = 1, numberofgroups do
 					if a == 1 then --reassign the old bodyid
-						rotation = tetribodies[i-ioffset]:getAngle()
+						rotation = old_angle
 						tetribodies[i-ioffset]:destroy()
-						tetribodies[i-ioffset] = love.physics.newBody(world, tetribodies[i-ioffset]:getX(), tetribodies[i-ioffset]:getY(), tetribodies[i-ioffset]:getMass(), blockrot)
+						tetribodies[i-ioffset] = love.physics.newBody(world, old_x, old_y, old_mass, blockrot)
 						tetribodies[i-ioffset]:setAngle(rotation)
 						tetrishapes[i-ioffset] = {}
 						for b, c in pairs(tetrishapescopy) do
 							if shapegroups[b] == a then
-								cotable = getPoints2table(tetrishapescopy[b])
+								cotable = cached_coords[b]
 								for var = 1, #cotable, 2 do
 									cotable[var], cotable[var+1] = tetribodies[i-ioffset]:getLocalPoint(cotable[var], cotable[var+1])
 								end
@@ -571,8 +593,14 @@ function removeline(lineno) --Does all necessary things to clear a line. Refines
 						end
 						
 						--save old imagedata to local var first in case we create a new bodyid..
-						backupimagedata = love.image.newImageDataFromDimensions( tetriimagedata[i-ioffset]:getWidth(), tetriimagedata[i-ioffset]:getHeight())
-						backupimagedata:paste(tetriimagedata[i-ioffset], 0, 0, 0, 0, tetriimagedata[i-ioffset]:getWidth(), tetriimagedata[i-ioffset]:getHeight() )
+						local src_ps = tetriimagedata[i-ioffset].pixelScale or 1
+						local src_rw = tetriimagedata[i-ioffset]:getWidth() / src_ps
+						local src_rh = tetriimagedata[i-ioffset]:getHeight() / src_ps
+						backupimagedata = love.image.newImageDataFromDimensions( src_rw, src_rh)
+						backupimagedata.width = src_rw * src_ps
+						backupimagedata.height = src_rh * src_ps
+						backupimagedata.pixelScale = src_ps
+						backupimagedata:paste(tetriimagedata[i-ioffset], 0, 0, 0, 0, src_rw, src_rh )
 
 						--cut the image.
 						cutimage(i-ioffset, numberofgroups)
@@ -594,13 +622,13 @@ function removeline(lineno) --Does all necessary things to clear a line. Refines
 						end
 						
 					else --create new bodyid
-						tetribodies[highestbody()+1] = love.physics.newBody(world, tetribodies[i-ioffset]:getX(), tetribodies[i-ioffset]:getY(), tetribodies[i-ioffset]:getMass(), blockrot)
-						tetribodies[highestbody()]:setAngle(tetribodies[i-ioffset]:getAngle())
+						tetribodies[highestbody()+1] = love.physics.newBody(world, old_x, old_y, old_mass, blockrot)
+						tetribodies[highestbody()]:setAngle(old_angle)
 						tetrishapes[highestbody()] = {}
 						
 						for b, c in pairs(tetrishapescopy) do
 							if shapegroups[b] == a then
-								cotable = getPoints2table(tetrishapescopy[b])
+								cotable = cached_coords[b]
 								for var = 1, #cotable, 2 do
 									cotable[var], cotable[var+1] = tetribodies[i-ioffset]:getLocalPoint(cotable[var], cotable[var+1])
 								end
@@ -609,19 +637,28 @@ function removeline(lineno) --Does all necessary things to clear a line. Refines
 							end
 						end
 						
-						linearspeedX, linearspeedY = tetribodies[i-ioffset]:getLinearVelocity()
+						linearspeedX, linearspeedY = old_velx, old_vely
 						tetribodies[highestbody()]:setLinearVelocity(linearspeedX, linearspeedY)
 						tetribodies[highestbody()]:setLinearDamping(0.5)
 						tetribodies[highestbody()]:setBullet(true)
-						tetribodies[highestbody()]:setAngularVelocity(tetribodies[i-ioffset]:getAngularVelocity())
+						tetribodies[highestbody()]:setAngularVelocity(old_angvel)
 						
-						tetriimagedata[highestbody()] = love.image.newImageDataFromDimensions( backupimagedata:getWidth(), backupimagedata:getHeight())
-						tetriimagedata[highestbody()]:paste( backupimagedata, 0, 0, 0, 0, backupimagedata:getWidth(), backupimagedata:getHeight() )
+						local bk_ps = backupimagedata.pixelScale or 1
+						local bk_rw = backupimagedata:getWidth() / bk_ps
+						local bk_rh = backupimagedata:getHeight() / bk_ps
+						tetriimagedata[highestbody()] = love.image.newImageDataFromDimensions( bk_rw, bk_rh)
+						tetriimagedata[highestbody()].width = bk_rw * bk_ps
+						tetriimagedata[highestbody()].height = bk_rh * bk_ps
+						tetriimagedata[highestbody()].pixelScale = bk_ps
+						tetriimagedata[highestbody()]:paste( backupimagedata, 0, 0, 0, 0, bk_rw, bk_rh )
 						tetriimages[highestbody()] = padImagedata( tetriimagedata[highestbody()] )
 						tetrikind[highestbody()] = tetrikind[i-ioffset]
 						
-						debugimagedata = love.image.newImageDataFromDimensions( backupimagedata:getWidth(), backupimagedata:getHeight())
-						debugimagedata:paste(backupimagedata, 0, 0, 0, 0, backupimagedata:getWidth(), backupimagedata:getHeight() )
+						debugimagedata = love.image.newImageDataFromDimensions( bk_rw, bk_rh)
+						debugimagedata.width = bk_rw * bk_ps
+						debugimagedata.height = bk_rh * bk_ps
+						debugimagedata.pixelScale = bk_ps
+						debugimagedata:paste(backupimagedata, 0, 0, 0, 0, bk_rw, bk_rh )
 						debugimage = padImagedata( debugimagedata )
 						
 						--cut the image
@@ -647,11 +684,15 @@ function removeline(lineno) --Does all necessary things to clear a line. Refines
 			end --if body empty
 			end --if refined
 			
-			--clean up the tables..
-			for a, b in pairs(tetrishapescopy) do
-				if tetrishapescopy[a] then
-					tetrishapescopy[a]:destroy()
-					tetrishapescopy[a] = nil
+			--clean up the tables. When refined == true the body (and its shapes)
+			--were destroyed above, so the tetrishapescopy shape IDs are already
+			--invalid -- calling destroy again would be a double-free.
+			if refined == false then
+				for a, b in pairs(tetrishapescopy) do
+					if tetrishapescopy[a] then
+						tetrishapescopy[a]:destroy()
+						tetrishapescopy[a] = nil
+					end
 				end
 			end
 			
@@ -727,18 +768,18 @@ function cutimage(bodyid, numberofgroups) --cuts the image of a body based on it
 	local ang = math.atan2(point2[1] - point1[1], point2[2] - point1[2])
 	ang = -ang + math.pi]]--
 	
-	for y = 0, height-1 do
-		for x = 0, width-1 do
-		--[[local ang2 = math.atan2(x - point1[1], y - point1[2]) --PART OF OLD METHOD
-			ang2 = -ang2 + math.pi
-			
-			if (ang2 > ang and ang2 < ang + math.pi) or ang2 < ang - math.pi or (x < leftlimit or x > rightlimit) then
-				tetriimagedata[bodyid]:setPixel(x, y, 255, 255, 255, 0)
-			end]]
-			
-			local dummy1, dummy2 = tetribodies[bodyid]:getWorldPoint((x-width/2+.5)*(4/scale), (y-height/2+.5)*(4/scale))
+	-- The imagedata reports scaled dimensions (original_size * pixelScale)
+	-- but the underlying vita2d texture is only original_size. Iterating over
+	-- the scaled dimensions writes out of bounds, so use the real texture size.
+	local pixel_scale = tetriimagedata[bodyid].pixelScale or 1
+	local real_width = width / pixel_scale
+	local real_height = height / pixel_scale
+
+	for y = 0, real_height-1 do
+		for x = 0, real_width-1 do
+			local dummy1, dummy2 = tetribodies[bodyid]:getWorldPoint((x-real_width/2+.5/pixel_scale)*4, (y-real_height/2+.5/pixel_scale)*4)
 			local deletepixel = true
-			
+
 			for i, v in pairs(tetrishapes[bodyid]) do
 				if v:testPoint( dummy1, dummy2 ) then
 					deletepixel = false
@@ -1009,9 +1050,13 @@ function checklinedensity(active) --checks all 18 lines and, if active == true, 
 			end
 			
 			--Draw the screen before removing lines.
+			love.beginBlend()
+
 			love.graphics.clear()
 			gameA_draw()
 			love.graphics.present()
+
+			love.endBlend()
 			
 			for i = 1, 18 do
 				if linesremoved[i] then
@@ -1180,7 +1225,7 @@ function collideA(a, b, coll) --box2d callback. calls endblock.
 			if main.gamestate == "gameA" then
 				if tetribodies[1]:getY() < losingY then
 					main.gamestate = "failingA"
-					if musicno < 4 then
+					if main.musicno < 4 then
 						love.audio.stop(main.music[main.musicno])
 					end
 					-- love.audio.stop(main.gameover1)

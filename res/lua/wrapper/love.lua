@@ -307,13 +307,11 @@ function love.image.newImageDataFromPath(filePath)
     local graphics_width = Graphics.getImageWidth(graphics_id)
     local graphics_height = Graphics.getImageHeight(graphics_id)
 
-    love.trace("imagepath: " .. filePath .. " with id:" .. graphics_id)
-
     return loveImageData:new({id = graphics_id, width = graphics_width, height = graphics_height})
 end
 
 function love.image.newImageDataFromDimensions(image_width, image_height)
-    local graphics_id = Graphics.createImage(image_width, image_height, Color.new(0, 0, 0, 0))
+    local graphics_id = Graphics.createImage(image_width, image_height)
     return loveImageData:new({id = graphics_id, width = image_width, height = image_height})
 end
 
@@ -361,7 +359,6 @@ function love.graphics.newImageFont(image_id, glyphs, is_white)
 end
 
 function love.audio.play(snd)
-    love.trace("play: " .. snd.name)
     Sound.play(snd.id, snd.isLooping == true)
 end
 
@@ -456,11 +453,18 @@ function love.graphics.drawFontImage(drawable, x, y, angle, scale_x, scale_y, of
 end
 
 function love.graphics.setScissor(x, y, width, height)
-    local stretch_x, stretch_y = love.graphics.getScreenScale()
-    love.scissor.x = x * stretch_x
-    love.scissor.y = y * stretch_y
-    love.scissor.width = width * stretch_x
-    love.scissor.height = height * stretch_y
+    if(x ~= nil and y ~= nil and width ~= nil and height ~= nil) then
+        local stretch_x, stretch_y = love.graphics.getScreenScale()
+        love.scissor.x = x * stretch_x
+        love.scissor.y = y * stretch_y
+        love.scissor.width = width * stretch_x
+        love.scissor.height = height * stretch_y
+    else
+        love.scissor.x = 0
+        love.scissor.y = 0
+        love.scissor.width = SCREEN_WIDTH
+        love.scissor.height = SCREEN_HEIGHT
+    end
 end
 
 function love.physics.newWorld(x1, y1, x2, y2, xg, yg, sleep)
@@ -539,7 +543,23 @@ function love.graphics.setColor(r, g, b)
 end
 
 function love.graphics.rectangle(mode, x, y, width, height, rx, ry, segments)
-    Graphics.fillRect(x,y, x + width, y + height, love.graphics.color)
+    Graphics.fillRect(x,x + width, y, y + height, love.graphics.color)
+end
+
+function love.printSystem()
+    local gpu = System.getGpuSpeed()
+    local cpu = System.getCpuSpeed()
+    local white = Color.new(255,255,255)
+    Graphics.debugPrint(SCREEN_WIDTH - 150, 20, "GPU: " .. gpu, white)
+    Graphics.debugPrint(SCREEN_WIDTH - 150, 40, "CPU: " .. cpu, white)
+end
+
+function love.graphics.clear()
+    Screen.clear(love.env.backgroundColor)
+end
+
+function love.graphics.present()
+    -- Graphics.present()
 end
 
 return love

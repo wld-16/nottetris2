@@ -96,8 +96,8 @@ add_executable(${PROJECT_NAME}
         src/screen.cpp
         src/sound.cpp
         src/timer.cpp
-        src/system.cpp
         src/physics.cpp
+        src/system.cpp
         src/vita2d_debug_draw.cpp
         src/vita2d_debug_draw.h
 )

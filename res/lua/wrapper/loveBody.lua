@@ -98,4 +98,22 @@ function loveBody:applyTorque(torque)
     Physics.applyTorque(self.id, torque)
 end
 
+function loveBody:getLocalPoint(wx, wy)
+    local lx, ly = Physics.getLocalPoint(self.id, wx, wy)
+    return lx, ly
+end
+
+function loveBody:getWorldPoint(lx, ly)
+    local wx, wy = Physics.getWorldPoint(self.id, lx, ly)
+    return wx, wy
+end
+
+function loveBody:destroy()
+    Physics.destroyBody(self.id)
+end
+
+function loveBody:setAngle(angle)
+    Physics.setAngle(self.id, angle)
+end
+
 return loveBody

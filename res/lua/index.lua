@@ -83,6 +83,7 @@ local function mainLoop()
         -- setBackgroundColor only recorded the colour until now; passing it here
         -- is what makes it the colour the frame actually starts from.
         Screen.clear(love.env.backgroundColor)
+        love.printSystem()
         love.draw()
         love.endBlend()
         Screen.flip()

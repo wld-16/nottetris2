@@ -1,8 +1,19 @@
+local failed = {}
+
+local main = {}
+local love = {}
+
+function failed.loadMain(mainInstance, loveInstance)
+	main = mainInstance
+	love = loveInstance
+	controls.initLove(loveInstance)
+end
+
 function failed_load()
-	gamestate = "failed"
+	main.gamestate = "failed"
 	tetribodies = {} -- CLEAR ALL
 	tetrishapes = {} -- PIECES
-	love.audio.play(gameover2)
+	love.audio.play(main.gameover2)
 end
 
 function failed_draw()
@@ -15,11 +26,11 @@ function failed_draw()
 	end
 	
 	if gameno == 1 then
-		love.graphics.draw(gamebackgroundcutoff, 0, 0, 0, scale)
-		love.graphics.draw(gameovercutoff, 14*scale, 0, 0, scale)
+		love.graphics.draw(main.gamebackgroundcutoff, 0, 0, 0, scale)
+		love.graphics.draw(main.gameovercutoff, 14*scale, 0, 0, scale)
 	else
-		love.graphics.draw(gamebackground, 0, 0, 0, scale)
-		love.graphics.draw(gameover, 16*scale, 0, 0, scale)
+		love.graphics.draw(main.gamebackground, 0, 0, 0, scale)
+		love.graphics.draw(main.gameover, 16*scale, 0, 0, scale)
 	end
 	
 	--SCORES---------------------------------------
@@ -86,17 +97,19 @@ function failed_checkhighscores()
 			highscorename[i] = ""
 			highscore[i] = scorescore
 			cursorblink = true
-			love.audio.play(highscoreintro)
+			love.audio.play(main.highscoreintro)
 			highscoremusicstart = love.timer.getTime()
 			musicchanged = false
-			gamestate = "highscoreentry"
+			main.gamestate = "highscoreentry"
 			break
 		end
 	end
 	if highscoreno == 0 then--no new highscore
-		gamestate = "menu"
-		if musicno < 4 then
-			love.audio.play(music[musicno])
+		main.gamestate = "menu"
+		if main.musicno < 4 then
+			love.audio.play(main.music[main.musicno])
 		end
 	end
 end
+
+return failed

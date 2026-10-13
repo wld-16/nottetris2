@@ -49,18 +49,37 @@ function loveImageData:getPixel(x, y)
 end
 
 function loveImageData:setPixel(x, y, r, g, b, a)
-    Graphics.drawPixel(x,y,Color.new(r, g, b),self.id)
+    local color = Color.new(r, g, b, a or 255)
+    Graphics.drawPixel(x,y,color,self.id)
 end
 
+function loveImageData:paste(source, dx, dy, sx, sy, sw, sh)
+    -- getWidth/getHeight report scaled dimensions, but the underlying vita2d
+    -- texture is only the original size. Clamp to the real texture dimensions
+    -- so getPixel/drawPixel never read or write out of bounds.
+    local src_ps = source.pixelScale or 1
+    local src_rw = source:getWidth() / src_ps
+    local src_rh = source:getHeight() / src_ps
 
--- TODO: There might occur bugs here
-function loveImageData:paste(imageData, x, y)
-    for index_y = y, imageData:getHeight(), 1
-    do
-       for index_x = x, imageData:getWidth(), 1
-       do
-            local color = Graphics.getPixel(index_x, index_y, imageData:getId())
-            Graphics.drawPixel(index_x, index_y, color, self.id)
+    if(sx == nil and sy == nil and sw == nil and sh == nil) then
+        for index_y = dy, src_rh - 1, 1
+        do
+            for index_x = dx, src_rw - 1, 1
+            do
+                local color = Graphics.getPixel(index_x, index_y, source:getId())
+                Graphics.drawPixel(index_x, index_y, color, self.id)
+            end
+        end
+    else
+        local eff_sw = math.min(sw, src_rw)
+        local eff_sh = math.min(sh, src_rh)
+        for index_y = sy, eff_sh - 1, 1
+        do
+            for index_x = sx, eff_sw - 1, 1
+            do
+                local color = Graphics.getPixel(index_x, index_y, source:getId())
+                Graphics.drawPixel(dx + index_x, dy + index_y, color, self.id)
+            end
         end
     end
 end

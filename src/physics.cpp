@@ -128,17 +128,17 @@ int lua_initPolygonShape(lua_State *L)
         return luaL_error(L, "A polygon may have at most %d vertices.", B2_MAX_POLYGON_VERTICES);
     }
 
-    std::vector<int> int_vector;
+    std::vector<float> coord_vector;
     for (size_t i = 1; i <= len; i++) {
         // Pushes table[i] onto the top of the stack
         lua_rawgeti(L, 2, i);
 
         // Ensure the value at table[i] is actually an integer/number
         if (!lua_isnumber(L, -1)) {
-            int_vector.clear();
+            coord_vector.clear();
             return luaL_error(L, "Element at index %d is not a number.", (int)i);
         }
-        int_vector.push_back((int)lua_tointeger(L, -1));
+        coord_vector.push_back((float)lua_tonumber(L, -1));
 
         lua_pop(L, 1);
     }
@@ -148,8 +148,8 @@ int lua_initPolygonShape(lua_State *L)
 
     for (size_t i = 0; i < vertex_count; i++) {
         b2Vec2 point;
-        point.x = scaleDown(static_cast<float>(int_vector[i * 2]));
-        point.y = scaleDown(static_cast<float>(int_vector[i * 2 + 1]));
+        point.x = scaleDown(coord_vector[i * 2]);
+        point.y = scaleDown(coord_vector[i * 2 + 1]);
         vertices.push_back(point);
     }
 
@@ -627,17 +627,24 @@ int lua_getPoints(lua_State *L)
     auto b2_load_shape_id = b2LoadShapeId(shape_id);
     auto b2_shape_get_polygon = b2Shape_GetPolygon(b2_load_shape_id);
 
+    // b2Shape_GetPolygon returns vertices in the body's local frame. The game
+    // expects world coordinates (it compares Y against line positions in world
+    // space and passes them to getLocalPoint). Convert each vertex to world.
+    b2BodyId b2_body_id = b2Shape_GetBody(b2_load_shape_id);
+
     size_t size = b2_shape_get_polygon.count * 2;
     lua_createtable(L, size, 0);
 
     // 2. Loop through your C array
     for (int i = 0; i < size; i++) {
+        int vi = i / 2;
+        b2Vec2 world = b2Body_GetWorldPoint(b2_body_id, b2_shape_get_polygon.vertices[vi]);
         if (i % 2 == 0)
         {
-            lua_pushnumber(L, scaleUp(b2_shape_get_polygon.vertices[i].x));
-        } else if (i % 2 == 1)
+            lua_pushnumber(L, scaleUp(world.x));
+        } else
         {
-            lua_pushnumber(L, scaleUp(b2_shape_get_polygon.vertices[i].y));
+            lua_pushnumber(L, scaleUp(world.y));
         }
 
         // Pops the number from the top and assigns it to table[i + 1]
@@ -699,6 +706,135 @@ int lua_testSegment(lua_State *L)
     return 1;
 }
 
+int lua_getLocalPoint(lua_State *L)
+{
+    int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+    if (argc != 3)
+    {
+        return luaL_error(L, "wrong number of arguments");
+    }
+#endif
+    auto b2_body_id = static_cast<uint64_t>(luaL_checknumber(L, 1));
+    b2BodyId body_id = b2LoadBodyId(b2_body_id);
+
+    float wx = static_cast<float>(luaL_checknumber(L, 2));
+    float wy = static_cast<float>(luaL_checknumber(L, 3));
+
+    b2Vec2 local = b2Body_GetLocalPoint(body_id, b2Vec2{scaleDown(wx), scaleDown(wy)});
+    lua_pushnumber(L, scaleUp(local.x));
+    lua_pushnumber(L, scaleUp(local.y));
+    return 2;
+}
+
+int lua_getWorldPoint(lua_State *L)
+{
+    int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+    if (argc != 3)
+    {
+        return luaL_error(L, "wrong number of arguments");
+    }
+#endif
+    auto b2_body_id = static_cast<uint64_t>(luaL_checknumber(L, 1));
+    b2BodyId body_id = b2LoadBodyId(b2_body_id);
+
+    float lx = static_cast<float>(luaL_checknumber(L, 2));
+    float ly = static_cast<float>(luaL_checknumber(L, 3));
+
+    b2Vec2 world = b2Body_GetWorldPoint(body_id, b2Vec2{scaleDown(lx), scaleDown(ly)});
+    lua_pushnumber(L, scaleUp(world.x));
+    lua_pushnumber(L, scaleUp(world.y));
+    return 2;
+}
+
+int lua_destroyBody(lua_State *L)
+{
+    int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+    if (argc != 1)
+    {
+        return luaL_error(L, "wrong number of arguments");
+    }
+#endif
+    auto b2_body_id = static_cast<uint64_t>(luaL_checknumber(L, 1));
+    b2BodyId body_id = b2LoadBodyId(b2_body_id);
+
+    b2DestroyBody(body_id);
+    return 0;
+}
+
+int lua_setAngle(lua_State *L)
+{
+    int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+    if (argc != 2)
+    {
+        return luaL_error(L, "wrong number of arguments");
+    }
+#endif
+    auto b2_body_id = static_cast<uint64_t>(luaL_checknumber(L, 1));
+    b2BodyId body_id = b2LoadBodyId(b2_body_id);
+    float angle = static_cast<float>(luaL_checknumber(L, 2));
+
+    b2Vec2 pos = b2Body_GetPosition(body_id);
+    b2Body_SetTransform(body_id, pos, b2MakeRot(angle));
+    return 0;
+}
+
+int lua_destroyShape(lua_State *L)
+{
+    int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+    if (argc != 1)
+    {
+        return luaL_error(L, "wrong number of arguments");
+    }
+#endif
+    auto shape_id = static_cast<uint64_t>(luaL_checknumber(L, 1));
+    b2ShapeId b2_shape_id = b2LoadShapeId(shape_id);
+
+    b2DestroyShape(b2_shape_id, true);
+    return 0;
+}
+
+int lua_testPoint(lua_State *L)
+{
+    int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+    if (argc != 3)
+    {
+        return luaL_error(L, "wrong number of arguments");
+    }
+#endif
+    auto shape_id = static_cast<uint64_t>(luaL_checknumber(L, 1));
+    b2ShapeId b2_shape_id = b2LoadShapeId(shape_id);
+
+    float x = static_cast<float>(luaL_checknumber(L, 2));
+    float y = static_cast<float>(luaL_checknumber(L, 3));
+
+    bool hit = b2Shape_TestPoint(b2_shape_id, b2Vec2{scaleDown(x), scaleDown(y)});
+    lua_pushboolean(L, hit ? 1 : 0);
+    return 1;
+}
+
+int lua_setDensity(lua_State *L)
+{
+    int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+    if (argc != 2)
+    {
+        return luaL_error(L, "wrong number of arguments");
+    }
+#endif
+    auto shape_id = static_cast<uint64_t>(luaL_checknumber(L, 1));
+    b2ShapeId b2_shape_id = b2LoadShapeId(shape_id);
+    float density = static_cast<float>(luaL_checknumber(L, 2));
+
+    b2Shape_SetDensity(b2_shape_id, density, true);
+    return 0;
+}
+
 //Register our Phsysics functions
 const luaL_Reg Physics_functions[] = {
     {"newWorld",            lua_initWorld },
@@ -728,6 +864,13 @@ const luaL_Reg Physics_functions[] = {
     {"getPoints",         lua_getPoints},
     {"setFriction",         lua_setFriction},
     {"testSegment",        lua_testSegment},
+    {"getLocalPoint",      lua_getLocalPoint},
+    {"getWorldPoint",      lua_getWorldPoint},
+    {"destroyBody",        lua_destroyBody},
+    {"setAngle",            lua_setAngle},
+    {"destroyShape",        lua_destroyShape},
+    {"testPoint",           lua_testPoint},
+    {"setDensity",          lua_setDensity},
     {0, 0}
 };
 

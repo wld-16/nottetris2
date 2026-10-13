@@ -203,7 +203,7 @@ function main.load()
    main.lineclearduration = 1.2 --seconds
    lineclearblinks = 7 --i
    linecleartreshold = 8.1 --in blocks
-   densityupdateinterval = 1/30 --in seconds
+   densityupdateinterval = 1/3 --in seconds
    nextpiecerotspeed = 1 --rad per seconnd
    minfps = 1/50 --dt doesn't go higher than this
    scoreaddtime = 0.5
@@ -258,7 +258,7 @@ function start()
    menu_load()
 end
 
-function loadHighscoreMusic()
+function main.loadHighscoreMusic()
    main.musichighscore = love.audio.newSource( "sounds/highscoremusic.ogg", "highscore")
    main.musichighscore:setVolume( main.musicvolume)
    main.musichighscore:setLooping( true )
@@ -321,6 +321,10 @@ function loadIngameSounds()
 
    main.newlevel = love.audio.newSource( "sounds/newlevel.ogg", "newlevel")
    main.newlevel:setVolume( main.musicvolume)
+end
+
+function main.unloadGameMusic()
+
 end
 
 function loadMusicOptions()
@@ -855,6 +859,7 @@ end
 
 function getPoints2table(shape)
    x1,y1,x2,y2,x3,y3,x4,y4,x5,y5,x6,y6,x7,y7,x8,y8 = shape:getPoints()
+
    if x4 == nil then
       return {x1,y1,x2,y2,x3,y3}
    end

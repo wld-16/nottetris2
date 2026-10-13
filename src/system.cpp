@@ -28,9 +28,8 @@
 #- xerpi for drawing libs and for FTP server code ---------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------------------------*/
 
-#include <cstdlib>
-#include <cstring>
-#include <string>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 extern "C" {
 #include <png.h>
@@ -39,11 +38,15 @@ extern "C" {
 #include <taihen.h>
 }
 #include "include/nottetris.h"
-#include "head.h"
-#include "sha1.h"
+#include "include/head.h"
+#include "include/sha1.h"
 #define stringify(str) #str
 #define VariableRegister(lua, value) do { lua_pushinteger(lua, value); lua_setglobal (lua, stringify(value)); } while(0)
 #define ALIGN(x, a) (((x) + ((a) - 1)) & ~((a) - 1))
+
+enum {
+	EXTRACT_END
+};
 
 #define COPY_BUFFER_SIZE (1024 * 1024)
 
@@ -63,7 +66,6 @@ static uint32_t SCREEN_DIMMING_TIMER = SCE_KERNEL_POWER_TICK_DISABLE_OLED_DIMMIN
 static SceMsgDialogProgressBarParam barParam;
 static SceMsgDialogUserMessageParam msgParam;
 bool messageStarted = false;
-static char messageText[512];
 
 volatile int asyncResult = 1;
 uint8_t async_task_num = 0;
@@ -429,7 +431,7 @@ static int lua_checkexist(lua_State *L) {
 	if (argc != 1)
 		return luaL_error(L, "wrong number of arguments");
 #endif
-	char *file_tbo = (char *) luaL_checkstring(L, 1);
+	const char *file_tbo = luaL_checkstring(L, 1);
 	SceUID fileHandle = sceIoOpen(file_tbo, SCE_O_RDONLY, 0777);
 	if (fileHandle < 0)
 		lua_pushboolean(L, false);
@@ -550,6 +552,116 @@ static int lua_wait(lua_State *L) {
 	return 0;
 }
 
+static int lua_screenshot(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 1 && argc != 2 && argc != 3)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	const char *filename = luaL_checkstring(L, 1);
+	int format = (argc > 1) ? luaL_checkinteger(L, 2) : FORMAT_BMP;
+	int ratio = (argc == 3) ? luaL_checkinteger(L, 3) : 127;
+	SceDisplayFrameBuf param;
+	param.size = sizeof(SceDisplayFrameBuf);
+	sceDisplayWaitVblankStart();
+	sceDisplayGetFrameBuf(&param, SCE_DISPLAY_SETBUF_NEXTFRAME);
+	if (format == FORMAT_BMP) {
+		SceUID fd = sceIoOpen(filename, SCE_O_CREAT|SCE_O_WRONLY|SCE_O_TRUNC, 0777);
+		uint8_t *bmp_content = (uint8_t*)malloc(((param.pitch * param.height) << 2) + 0x36);
+		sceClibMemset(bmp_content, 0, 0x36);
+		*(uint16_t*)&bmp_content[0x0] = 0x4D42;
+		*(uint32_t*)&bmp_content[0x2] = ((param.pitch * param.height) << 2) + 0x36;
+		*(uint32_t*)&bmp_content[0xA] = 0x36;
+		*(uint32_t*)&bmp_content[0xE] = 0x28;
+		*(uint32_t*)&bmp_content[0x12] = param.pitch;
+		*(uint32_t*)&bmp_content[0x16] = param.height;
+		*(uint32_t*)&bmp_content[0x1A] = 0x00200001;
+		*(uint32_t*)&bmp_content[0x22] = ((param.pitch * param.height) << 2);
+		uint32_t* buffer = (uint32_t*)&bmp_content[0x36];
+		uint32_t* framebuf = (uint32_t*)param.base;
+		for (int y = 0; y < param.height; y++) {
+			for (int x = 0; x < param.pitch; x++) {
+				buffer[x+y*param.pitch] = framebuf[x + (param.height - y) * param.pitch];
+				uint8_t *clr = (uint8_t*)&buffer[x + y * param.pitch];
+				uint8_t r = clr[0];
+				clr[0] = clr[2];
+				clr[2] = r;
+			}
+		}
+		sceIoWrite(fd, bmp_content, ((param.pitch*param.height) << 2) + 0x36);
+		free(bmp_content);
+		sceIoClose(fd);
+	} else if (format == FORMAT_JPG) {
+		SceUID fd = sceIoOpen(filename, SCE_O_CREAT|SCE_O_WRONLY|SCE_O_TRUNC, 0777);
+		uint32_t in_size = ALIGN((param.width * param.height) << 1, 256);
+		uint32_t out_size = ALIGN(param.width * param.height, 256);
+		uint32_t buf_size = ALIGN(in_size + out_size, 0x40000);
+		SceUID memblock = sceKernelAllocMemBlock("encoderBuffer", SCE_KERNEL_MEMBLOCK_TYPE_USER_CDRAM_RW, buf_size, NULL);
+		void *buf_addr = NULL;
+		sceKernelGetMemBlockBase(memblock, &buf_addr);
+		SceJpegEncoderContext context = malloc(sceJpegEncoderGetContextSize());
+		sceJpegEncoderInit(context, param.width, param.height, (SceJpegEncoderPixelFormat)(SCE_JPEGENC_PIXELFORMAT_YCBCR420 | SCE_JPEGENC_PIXELFORMAT_CSC_ARGB_YCBCR), (void*)((uint32_t)buf_addr + in_size), out_size);
+		sceJpegEncoderSetValidRegion(context, param.width, param.height);
+		sceJpegEncoderSetCompressionRatio(context, ratio);
+		sceJpegEncoderSetOutputAddr(context, (void*)((uint32_t)buf_addr + in_size), out_size);
+		sceJpegEncoderCsc(context, buf_addr, param.base, param.pitch, SCE_JPEGENC_PIXELFORMAT_ARGB8888);
+		int filesize = sceJpegEncoderEncode(context, buf_addr);
+		sceIoWrite(fd, (void*)((uint32_t)buf_addr + in_size), filesize);
+		sceJpegEncoderEnd(context);
+		free(context);
+		sceKernelFreeMemBlock(memblock);
+		sceIoClose(fd);
+	} else if (format == FORMAT_PNG) {
+		FILE *fh = fopen(filename, "wb");
+		uint8_t *raw_data = (uint8_t*)malloc((param.width*param.height) << 2);
+		uint32_t *buffer = (uint32_t*)raw_data;
+		uint32_t *framebuf = (uint32_t*)param.base;
+		int y;
+		for (y = 0; y < 544; y++) {
+			memcpy(buffer, framebuf, 960 * 4);
+			buffer += 960;
+			framebuf += param.pitch;
+		}
+		liq_attr *handle = liq_attr_create();
+		liq_image *input_image = liq_image_create_rgba(handle, raw_data, 960, 544, 0);
+		liq_result *res;
+		liq_image_quantize(input_image, handle, &res);
+		uint8_t *quant_raw = (uint8_t*)malloc(960 * 544);
+		liq_set_dithering_level(res, 1.0);
+		liq_write_remapped_image(res, input_image, quant_raw, 960 * 544);
+		const liq_palette *palette = liq_get_palette(res);
+		png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);;
+		png_infop info_ptr = png_create_info_struct(png_ptr);
+		setjmp(png_jmpbuf(png_ptr));
+		png_init_io(png_ptr, fh);
+		png_set_IHDR(png_ptr, info_ptr, 960, 544,
+			8, PNG_COLOR_TYPE_PALETTE, PNG_INTERLACE_NONE,
+			PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+		png_color *pal = (png_color*)png_malloc(png_ptr, palette->count*sizeof(png_color));
+		for (int i = 0; i < palette->count; i++) {
+			png_color *col = &pal[i];
+			col->red = palette->entries[i].r;
+			col->green = palette->entries[i].g;
+			col->blue = palette->entries[i].b;
+		}
+		png_set_PLTE(png_ptr, info_ptr, pal, palette->count);
+		png_write_info(png_ptr, info_ptr);
+		for (y = 0; y < 544; y++) {
+			png_write_row(png_ptr, &quant_raw[y * 960]);
+		}
+		png_write_end(png_ptr, NULL);
+		fclose(fh);
+		png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
+		png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
+		free(quant_raw);
+		free(raw_data);
+		liq_result_destroy(res);
+		liq_image_destroy(input_image);
+		liq_attr_destroy(handle);
+	}
+	return 0;
+}
+
 static int lua_dir(lua_State *L) {
 	int argc = lua_gettop(L);
 #ifndef SKIP_ERROR_HANDLING
@@ -583,16 +695,300 @@ static int lua_dir(lua_State *L) {
 	return 1;  /* table is already on top */
 }
 
-std::string pbp_files[] = {
-	"PARAM.SFO",
-	"ICON0.PNG",
-	"ICON1.PMF",
-	"PIC0.PNG",
-	"PIC1.PNG",
-	"SND0.AT3",
-	"DATA.PSP",
-	"DATA.PSAR"
-};
+static int lua_charging(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 0)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	lua_pushboolean(L, scePowerIsBatteryCharging());
+	return 1;
+}
+
+static int lua_percent(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 0)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	lua_pushinteger(L, scePowerGetBatteryLifePercent());
+	return 1;
+}
+
+static int lua_lifetime(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 0)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	lua_pushinteger(L, scePowerGetBatteryLifeTime());
+	return 1;
+}
+
+static int lua_voltbatt(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 0)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	lua_pushinteger(L, scePowerGetBatteryVolt());
+	return 1;
+}
+
+static int lua_healthbatt(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 0)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	lua_pushinteger(L, scePowerGetBatterySOH());
+	return 1;
+}
+
+static int lua_cyclebatt(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 0)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	lua_pushinteger(L, scePowerGetBatteryCycleCount());
+	return 1;
+}
+
+static int lua_tempbatt(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 0)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	lua_pushinteger(L, scePowerGetBatteryTemp() / 100);
+	return 1;
+}
+
+static int lua_fullbatt(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 0)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	lua_pushinteger(L, scePowerGetBatteryFullCapacity());
+	return 1;
+}
+
+static int lua_remainbatt(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 0)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	lua_pushinteger(L, scePowerGetBatteryRemainCapacity());
+	return 1;
+}
+
+static int lua_tickpower(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 1)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	int tmr = luaL_checkinteger(L, 1);
+	sceKernelPowerTick((SceKernelPowerTickType)tmr);
+	return 0;
+}
+
+static int lua_offpower(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 1)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	int tmr = luaL_checkinteger(L, 1);
+	sceKernelPowerLock((SceKernelPowerTickType)tmr);
+	return 0;
+}
+
+static int lua_onpower(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 1)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	int tmr = luaL_checkinteger(L, 1);
+	sceKernelPowerUnlock((SceKernelPowerTickType)tmr);
+	return 0;
+}
+
+static int lua_setcpu(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 1)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	int freq = luaL_checkinteger(L, 1);
+	scePowerSetArmClockFrequency(freq);
+	return 0;
+}
+
+static int lua_setbus(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 1)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	int freq = luaL_checkinteger(L, 1);
+	scePowerSetBusClockFrequency(freq);
+	return 0;
+}
+
+static int lua_setgpu(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 1)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	int freq = luaL_checkinteger(L, 1);
+	scePowerSetGpuClockFrequency(freq);
+	return 0;
+}
+
+static int lua_setgpu2(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 1)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	int freq = luaL_checkinteger(L, 1);
+	scePowerSetGpuXbarClockFrequency(freq);
+	return 0;
+}
+
+static int lua_getcpu(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 0)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	lua_pushinteger(L, scePowerGetArmClockFrequency());
+	return 1;
+}
+
+static int lua_getbus(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 0)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	lua_pushinteger(L, scePowerGetBusClockFrequency());
+	return 1;
+}
+
+static int lua_getgpu(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 0)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	lua_pushinteger(L, scePowerGetGpuClockFrequency());
+	return 1;
+}
+
+static int lua_getgpu2(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 0)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	lua_pushinteger(L, scePowerGetGpuXbarClockFrequency());
+	return 1;
+}
+
+static int lua_gettime(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 0)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	SceDateTime time;
+	sceRtcGetCurrentClockLocalTime(&time);
+	lua_pushinteger(L, time.hour);
+	lua_pushinteger(L, time.minute);
+	lua_pushinteger(L, time.second);
+	return 3;
+}
+
+static int lua_getdate(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 0)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	SceDateTime time;
+	sceRtcGetCurrentClockLocalTime(&time);
+	lua_pushinteger(L, sceRtcGetDayOfWeek(time.year, time.month, time.day));
+	lua_pushinteger(L, time.day);
+	lua_pushinteger(L, time.month);
+	lua_pushinteger(L, time.year);
+	return 4;
+}
+
+static int lua_nickname(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 0)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	SceChar8 nick[SCE_SYSTEM_PARAM_USERNAME_MAXSIZE];
+	sceAppUtilSystemParamGetString(SCE_SYSTEM_PARAM_ID_USERNAME, nick, SCE_SYSTEM_PARAM_USERNAME_MAXSIZE);
+	lua_pushstring(L, (char*)nick);
+	return 1;
+}
+
+static int lua_lang(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 0)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	int lang;
+	sceAppUtilSystemParamGetInt(SCE_SYSTEM_PARAM_ID_LANG, &lang);
+	lua_pushinteger(L, lang);
+	return 1;
+}
+
+static int lua_title(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 0)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	char title[256];
+	sceAppMgrAppParamGetString(0, 9, title , 256);
+	lua_pushstring(L, title);
+	return 1;
+}
+
+static int lua_titleid(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 0)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	char title[16];
+	sceAppMgrAppParamGetString(0, 12, title , 256);
+	lua_pushstring(L, title);
+	return 1;
+}
+
+static int lua_consoleprint(lua_State *L) {
+	int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+	if (argc != 1)
+		return luaL_error(L, "wrong number of arguments");
+#endif
+	const char *str = luaL_checkstring(L, 1);
+	sceClibPrintf("%s\n", str);
+	return 0;
+}
 
 //Register our System Functions
 static const luaL_Reg System_functions[] = {
@@ -614,6 +1010,34 @@ static const luaL_Reg System_functions[] = {
 	{"createDirectory",           lua_newdir},
 	{"listDirectory",             lua_dir},
 	{"wait",                      lua_wait},
+	{"isBatteryCharging",         lua_charging},
+	{"getBatteryPercentage",      lua_percent},
+	{"getBatteryLife",            lua_lifetime},
+	{"getBatteryCapacity",        lua_remainbatt},
+	{"getBatteryFullCapacity",    lua_fullbatt},
+	{"getBatteryTemp",            lua_tempbatt},
+	{"getBatteryVolt",            lua_voltbatt},
+	{"getBatteryHealth",          lua_healthbatt},
+	{"getBatteryCycles",          lua_cyclebatt},
+	{"disableTimer",              lua_offpower},
+	{"enableTimer",               lua_onpower},
+	{"resetTimer",                lua_tickpower},
+	{"setCpuSpeed",               lua_setcpu},
+	{"getCpuSpeed",               lua_getcpu},
+	{"setBusSpeed",               lua_setbus},
+	{"getBusSpeed",               lua_getbus},
+	{"setGpuSpeed",               lua_setgpu},
+	{"getGpuSpeed",               lua_getgpu},
+	{"setGpuXbarSpeed",           lua_setgpu2},
+	{"getGpuXbarSpeed",           lua_getgpu2},
+	{"getTime",                   lua_gettime},
+	{"getDate",                   lua_getdate},
+	{"getUsername",               lua_nickname},
+	{"getLanguage",               lua_lang},
+	{"getTitle",                  lua_title},
+	{"getTitleID",                lua_titleid},
+	{"takeScreenshot",            lua_screenshot},
+	{"consolePrint",              lua_consoleprint},
 	{0, 0}
 };
 
