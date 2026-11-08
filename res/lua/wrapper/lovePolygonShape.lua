@@ -13,7 +13,6 @@ function lovePolygonShape:new(o)
     o.id = o.id or 0
     o.points = o.points or {}
     o.body = o.body or {}
-    o.body:addShape(o)
     return o
 end
 

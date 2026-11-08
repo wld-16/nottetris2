@@ -36,6 +36,14 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -DHAVE_MPG123 -DHAVE_OGGVORBI
 # Optional. You can specify more param.sfo flags this way.
 set(VITA_MKSFOEX_FLAGS "${VITA_MKSFOEX_FLAGS} -d PARENTAL_LEVEL=1")
 
+# vita-elf-create appends ~4 KiB of SCE module data at the end of the code
+# segment and fails with "Cannot allocate ... bytes for SCE data" when the
+# code segment ends too close to the next segment (the linker puts segments
+# on 64 KiB boundaries). Pin the data segment to a fixed address far above
+# the code segment so there is always room for it. If the code segment ever
+# grows past this address, bump it to the next 4 MiB mark.
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--section-start=.init_array=0x81400000")
+
 find_package(Vorbis REQUIRED)
 
 # Add any additional include paths here
@@ -171,6 +179,7 @@ vita_create_vpk(${PROJECT_NAME}.vpk ${VITA_TITLEID} ${PROJECT_NAME}.self
         FILE res/lua/wrapper/loveWorld.lua wrapper/loveWorld.lua
         FILE res/lua/wrapper/lovePolygonShape.lua wrapper/lovePolygonShape.lua
         FILE res/lua/wrapper/loveRectangleShape.lua wrapper/loveRectangleShape.lua
+        FILE res/lua/wrapper/loveFixture.lua wrapper/loveFixture.lua
         #FILE res/sounds/themeA.ogg sounds/themeA.ogg
         FILE sce_sys/icon0.png sce_sys/icon0.png
         FILE sce_sys/livearea/contents/bg.png sce_sys/livearea/contents/bg.png

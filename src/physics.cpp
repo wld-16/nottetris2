@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <cstring>
+#include <memory>
 #include <unordered_map>
 #include <box2d/box2d.h>
 
@@ -51,12 +52,14 @@ int lua_initBody(lua_State *L)
 {
     int argc = lua_gettop(L);
 #ifndef SKIP_ERROR_HANDLING
-    if (argc != 5)
+    if (argc != 5 && argc != 4)
         return luaL_error(L, "wrong number of arguments");
 #endif
 
+
     uint64_t world = luaL_checkinteger(L, 1);
     auto b2_load_world_id = b2LoadWorldId(world);
+
     float x = static_cast<float>(luaL_checknumber(L, 2));
     float y = static_cast<float>(luaL_checknumber(L, 3));
 
@@ -169,34 +172,154 @@ int lua_initPolygonShape(lua_State *L)
     return 1;
 }
 
-int lua_initRectableShape(lua_State *L)
+int lua_initPolygon(lua_State *L)
+{
+    int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+    if(argc != 1)
+        return luaL_error(L, "wrong number of arguments");
+#endif
+
+    luaL_checktype(L, 1 , LUA_TTABLE);
+    size_t len = lua_objlen(L, 1);
+
+    if (len == 0) {
+        return luaL_error(L, "The provided list is empty.");
+    }
+
+    if (len % 2 != 0) {
+        return luaL_error(L, "The provided list must contain an even number of elements.");
+    }
+
+    int vertex_count = len / 2;
+    if (vertex_count < 3) {
+        return luaL_error(L, "A polygon needs at least 3 vertices.");
+    }
+    if (vertex_count > B2_MAX_POLYGON_VERTICES) {
+        return luaL_error(L, "A polygon may have at most %d vertices.", B2_MAX_POLYGON_VERTICES);
+    }
+
+    std::vector<float> coord_vector;
+    for (size_t i = 1; i <= len; i++) {
+        // Pushes table[i] onto the top of the stack
+        lua_rawgeti(L, 1, i);
+
+        // Ensure the value at table[i] is actually an integer/number
+        if (!lua_isnumber(L, -1)) {
+            coord_vector.clear();
+            return luaL_error(L, "Element at index %d is not a number.", (int)i);
+        }
+        coord_vector.push_back((float)lua_tonumber(L, -1));
+
+        lua_pop(L, 1);
+    }
+
+    std::vector<b2Vec2> vertices;
+    vertices.reserve(vertex_count);
+
+    for (size_t i = 0; i < vertex_count; i++) {
+        b2Vec2 point;
+        point.x = scaleDown(coord_vector[i * 2]);
+        point.y = scaleDown(coord_vector[i * 2 + 1]);
+        vertices.push_back(point);
+    }
+
+    b2Hull b2_hull = b2ComputeHull(vertices.data(), vertex_count);
+
+    if (b2_hull.count == 0) {
+        return luaL_error(L, "Failed to compute a valid convex hull from the provided points.");
+    }
+
+    b2Polygon* polygonDef = new b2Polygon(b2MakePolygon(&b2_hull, 0.0));
+
+
+    lua_pushinteger(L, (lua_Integer) polygonDef);
+    return 1;
+}
+
+int lua_initRectangleShape(lua_State *L)
 {
     int argc = lua_gettop(L);
 #ifndef SKIP_ERROR_HANDLING
     if(argc != 6)
         return luaL_error(L, "wrong number of arguments");
 #endif
-    uint64_t bodyId = (uint64_t) luaL_checknumber(L, 1);
-    auto b2_load_body_id = b2LoadBodyId(bodyId);
-    float x = static_cast<float>(luaL_checknumber(L, 2));
-    float y = static_cast<float>(luaL_checknumber(L, 3));
-    b2Vec2 position = {scaleDown(x), scaleDown(y)};
+    if (argc == 6)
+    {
+        uint64_t bodyId = (uint64_t) luaL_checknumber(L, 1);
+        auto b2_load_body_id = b2LoadBodyId(bodyId);
+        float x = static_cast<float>(luaL_checknumber(L, 2));
+        float y = static_cast<float>(luaL_checknumber(L, 3));
+        b2Vec2 position = {scaleDown(x), scaleDown(y)};
 
-    float width = static_cast<float>(luaL_checknumber(L, 4));
-    float height = static_cast<float>(luaL_checknumber(L, 5));
+        float width = static_cast<float>(luaL_checknumber(L, 4));
+        float height = static_cast<float>(luaL_checknumber(L, 5));
 
-    float angle = static_cast<float>(luaL_checknumber(L, 6));
-    b2Rot rotation = b2MakeRot(angle);
+        float angle = static_cast<float>(luaL_checknumber(L, 6));
+        b2Rot rotation = b2MakeRot(angle);
 
-    // LÖVE passes full width/height; b2MakeOffsetBox takes half-extents.
-    b2Polygon b2_offset_box = b2MakeOffsetBox(scaleDown(width) / 2.0f, scaleDown(height) / 2.0f, position, rotation);
+        // LÖVE passes full width/height; b2MakeOffsetBox takes half-extents.
+        b2Polygon b2_offset_box = b2MakeOffsetBox(scaleDown(width) / 2.0f, scaleDown(height) / 2.0f, position, rotation);
 
-    b2ShapeDef shape_def = b2DefaultShapeDef();
-    shape_def.enableContactEvents = true;
+        b2ShapeDef shape_def = b2DefaultShapeDef();
+        shape_def.enableContactEvents = true;
 
-    auto b2_polygon_shape = b2CreatePolygonShape(b2_load_body_id, &shape_def, &b2_offset_box);
-    uint64_t b2_store_shape_id = b2StoreShapeId(b2_polygon_shape);
-    lua_pushnumber(L, (lua_Number)b2_store_shape_id);
+        auto b2_polygon_shape = b2CreatePolygonShape(b2_load_body_id, &shape_def, &b2_offset_box);
+        uint64_t b2_store_shape_id = b2StoreShapeId(b2_polygon_shape);
+        lua_pushnumber(L, (lua_Number)b2_store_shape_id);
+        return 1;
+    }
+}
+
+int lua_initRectangle(lua_State *L)
+{
+    int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+    if(argc != 4)
+        return luaL_error(L, "wrong number of arguments");
+#endif
+    if (argc == 4)
+    {
+        float x = static_cast<float>(luaL_checknumber(L, 1));
+        float y = static_cast<float>(luaL_checknumber(L, 2));
+        b2Vec2 position = {scaleDown(x), scaleDown(y)};
+
+        float width = static_cast<float>(luaL_checknumber(L, 3));
+        float height = static_cast<float>(luaL_checknumber(L, 4));
+
+        float angle = 0.0f;
+        b2Rot rotation = b2MakeRot(angle);
+
+        b2Polygon* b2_offset_box = new b2Polygon(b2MakeOffsetBox(scaleDown(width) / 2.0f, scaleDown(height) / 2.0f, position, rotation));
+
+        lua_pushinteger(L, (lua_Integer) b2_offset_box);
+        return 1;
+    }
+}
+
+int lua_initFixture(lua_State *L)
+{
+    int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+    if (argc != 2)
+    {
+        return luaL_error(L, "wrong number of arguments");
+    }
+#endif
+    uint64_t b2_body_id = luaL_checknumber(L, 1);
+    auto b2_loaded_body_id = b2LoadBodyId(b2_body_id);
+
+    lua_Integer polygon_addr = luaL_checkinteger(L, 2);
+    b2Polygon* polygon = reinterpret_cast<b2Polygon*>(polygon_addr);
+
+    b2ShapeDef shapeDef = b2DefaultShapeDef();
+    // Contact events are opt-in in Box2D v3; without this the Lua collision
+    // callback registered via Physics.setCallbacks is never invoked.
+    shapeDef.enableContactEvents = true;
+    b2ShapeId shapeId = b2CreatePolygonShape(b2_loaded_body_id, &shapeDef, polygon);
+    uint64_t b2_store_shape_id = b2StoreShapeId(shapeId);
+
+    lua_pushnumber(L, b2_store_shape_id);
     return 1;
 }
 
@@ -613,6 +736,28 @@ int lua_setShapeData(lua_State *L)
     return 0;
 }
 
+int lua_getShapeData(lua_State *L)
+{
+    int argc = lua_gettop(L);
+    if (argc != 1)
+    {
+        return luaL_error(L, "wrong number of arguments");
+    }
+    uint64_t b2_shape_id = static_cast<uint64_t>(luaL_checknumber(L, 1));
+    b2ShapeId shape_id = b2LoadShapeId(b2_shape_id);
+
+    // lua_setShapeData stores a Lua registry reference as the user data
+    // pointer, so decode it the same way (matching the collision callback
+    // path in lua_update) instead of treating it as a C string.
+    void* ud = b2Shape_GetUserData(shape_id);
+    if (ud == nullptr) {
+        lua_pushnil(L);
+    } else {
+        lua_rawgeti(L, LUA_REGISTRYINDEX, (int)(intptr_t)ud);
+    }
+    return 1;
+}
+
 int lua_getPoints(lua_State *L)
 {
     int argc = lua_gettop(L);
@@ -840,7 +985,10 @@ const luaL_Reg Physics_functions[] = {
     {"newWorld",            lua_initWorld },
     {"newBody",             lua_initBody },
     {"newPolygonShape",     lua_initPolygonShape },
-    {"newRectangleShape",   lua_initRectableShape },
+    {"newPolygon",          lua_initPolygon },
+    {"newRectangleShape",   lua_initRectangleShape },
+    {"newRectangle",        lua_initRectangle },
+    {"newFixture",          lua_initFixture },
     {"update",              lua_update },
     {"drawWorld",           lua_drawWorld },
     {"getX",               lua_getX },
@@ -860,6 +1008,7 @@ const luaL_Reg Physics_functions[] = {
     {"setAngularVelocity",   lua_setAngularVelocity},
     {"setCallbacks",          lua_setCallbacks},
     {"setShapeData",          lua_setShapeData},
+    {"getShapeData",        lua_getShapeData},
     {"applyTorque",         lua_applyTorque},
     {"getPoints",         lua_getPoints},
     {"setFriction",         lua_setFriction},

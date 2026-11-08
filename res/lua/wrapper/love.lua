@@ -15,6 +15,7 @@ local loveWorld = require "loveWorld"
 local loveBody = require "loveBody"
 local lovePolygonShape = require "lovePolygonShape"
 local loveRectangleShape = require "loveRectangleShape"
+local loveFixture = require "loveFixture"
 
 -- Where the game's files live on the Vita
 -- GAME_ROOT_APP = "app0:/"
@@ -495,6 +496,17 @@ function love.physics.newWorld(x1, y1, x2, y2, xg, yg, sleep)
     end
 end
 
+function love.physics.newBody2(world, x, y, type)
+    local body_id = Physics.newBody(world.id, x, y, type)
+    return loveBody:new({
+        id = body_id,
+        world = world,
+        x = x,
+        y = y,
+        type = type
+    })
+end
+
 function love.physics.newBody(world, x, y, m, i)
     local body_id = Physics.newBody(world.id, x, y, m, i)
     return loveBody:new({
@@ -517,6 +529,16 @@ function love.physics.newPolygonShape(body, ...)
     })
 end
 
+function love.physics.newPolygonShape2(...)
+    local args = {...}
+    local polygon_id = Physics.newPolygon(args)
+    return lovePolygonShape:new({
+        id = polygon_id,
+        body = body,
+        points = unpack(args)
+    })
+end
+
 function love.physics.newRectangleShape(body, x, y, width, height, angle)
     if(angle == nil) then angle = 0 end
     local shape_id = Physics.newRectangleShape(body.id, x, y, width, height, angle)
@@ -528,6 +550,18 @@ function love.physics.newRectangleShape(body, x, y, width, height, angle)
         width = width,
         height = height,
         angle = angle
+    })
+    return rect
+end
+
+function love.physics.newRectangleShape2(x, y, width, height)
+    local polygon_id = Physics.newRectangle(x, y, width, height)
+    local rect = loveRectangleShape:new({
+        id = polygon_id,
+        x = x,
+        y = y,
+        width = width,
+        height = height,
     })
     return rect
 end
@@ -556,6 +590,16 @@ end
 
 function love.graphics.clear()
     Screen.clear(love.env.backgroundColor)
+end
+
+function love.physics.newFixture(body, polygon)
+    local fixture_id = Physics.newFixture(body.id, polygon.id);
+    local fixture = loveFixture:new({
+        id = fixture_id,
+        polygon_id = polygon.id,
+        body_id = body.id
+    })
+    return fixture
 end
 
 function love.graphics.present()

@@ -78,6 +78,7 @@ function failed_update()
 end
 
 function failed_checkhighscores()
+	love.trace("failed checkhighscores")
 	highscoreno = 0
 	selectblink = true
 	oldtime = love.timer.getTime()

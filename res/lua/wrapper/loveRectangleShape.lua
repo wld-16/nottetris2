@@ -15,7 +15,6 @@ function loveRectangleShape:new(o)
     self.__index = self
     o.id = o.id or 0
     o.body = o.body or {}
-    o.body:addShape(o)
     o.x = o.x or 0
     o.y = o.y or 0
     o.width = o.width or 0

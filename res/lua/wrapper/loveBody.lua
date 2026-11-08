@@ -9,6 +9,7 @@ local loveBody = {
     lvx = 0,
     lvy = 0,
     shapes = {},
+    type = "",
     isBullet = false
 }
 
@@ -23,6 +24,7 @@ function loveBody:new(o)
     o.m = o.m or 0
     o.i = o.i or 0
     o.shapes = {}
+    o.type = o.type or "static"
     return o
 end
 

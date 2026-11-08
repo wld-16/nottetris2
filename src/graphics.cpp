@@ -87,7 +87,7 @@ static void initFontPositions()
     font_map['3'] = std::make_pair(25, 7);
     font_map['4'] = std::make_pair(33, 7);
     font_map['5'] = std::make_pair(41, 7);
-    font_map['6'] = std::make_pair(41, 7);
+    font_map['6'] = std::make_pair(49, 7);
     font_map['7'] = std::make_pair(57, 7);
     font_map['8'] = std::make_pair(65, 7);
     font_map['9'] = std::make_pair(73, 7);
@@ -137,7 +137,7 @@ static void initFontPositions()
     fontwhite_map['3'] = std::make_pair(25, 7);
     fontwhite_map['4'] = std::make_pair(33, 7);
     fontwhite_map['5'] = std::make_pair(41, 7);
-    fontwhite_map['6'] = std::make_pair(41, 7);
+    fontwhite_map['6'] = std::make_pair(49, 7);
     fontwhite_map['7'] = std::make_pair(57, 7);
     fontwhite_map['8'] = std::make_pair(65, 7);
     fontwhite_map['9'] = std::make_pair(73, 7);

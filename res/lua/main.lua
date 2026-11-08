@@ -1,6 +1,7 @@
 local love = require "love"
 local menu = require "menu"
 local gameA = require "gameA"
+local gameB = require "gameB"
 
 local main = {
    gamestate = "logo",
@@ -93,7 +94,6 @@ local main = {
 }
 
 function main.load()
-     require "gameB"
      require "gameBmulti"
      require "controls"
      require "menu"
@@ -160,20 +160,49 @@ function main.load()
 
    --Whitelist for highscorenames--
    main.whitelist = {}
-   for i = 48, 57 do -- 0 - 9
-      main.whitelist[i] = true
-   end
-   for i = 65, 90 do -- A - Z
-      main.whitelist[i] = true
-   end
-   for i = 97, 122 do --a - z
-      main.whitelist[i] = true
-   end
-   main.whitelist[32] = true -- space
-   main.whitelist[44] = true -- ,
-   main.whitelist[45] = true -- -
-   main.whitelist[46] = true -- .
-   main.whitelist[95] = true -- _
+   main.whitelist[1] = "a"
+   main.whitelist[2] = "b"
+   main.whitelist[3] = "c"
+   main.whitelist[4] = "d"
+   main.whitelist[5] = "e"
+   main.whitelist[6] = "f"
+   main.whitelist[7] = "g"
+   main.whitelist[8] = "h"
+   main.whitelist[9] = "i"
+   main.whitelist[10] = "j"
+   main.whitelist[11] = "k"
+   main.whitelist[12] = "l"
+   main.whitelist[13] = "m"
+   main.whitelist[14] = "n"
+   main.whitelist[15] = "o"
+   main.whitelist[16] = "p"
+   main.whitelist[17] = "q"
+   main.whitelist[18] = "r"
+   main.whitelist[19] = "s"
+   main.whitelist[20] = "t"
+   main.whitelist[21] = "u"
+   main.whitelist[22] = "v"
+   main.whitelist[23] = "w"
+   main.whitelist[24] = "x"
+   main.whitelist[25] = "y"
+   main.whitelist[26] = "z"
+   main.whitelist[27] = "0"
+   main.whitelist[28] = "1"
+   main.whitelist[29] = "2"
+   main.whitelist[30] = "3"
+   main.whitelist[31] = "4"
+   main.whitelist[32] = "5"
+   main.whitelist[33] = "6"
+   main.whitelist[34] = "7"
+   main.whitelist[35] = "8"
+   main.whitelist[36] = "9"
+   main.whitelist[37] = " "
+   main.whitelist[38] = ","
+   main.whitelist[39] = "-"
+   main.whitelist[40] = "."
+   main.whitelist[41] = "_"
+   selectedchar = 0
+   currentchar = 1
 
    -------------------------------
 
@@ -289,6 +318,9 @@ function main.loadHighscoreMusic()
    love.audio.play(main.highscoreintro)
    love.audio.pause(main.highscoreintro)
 
+   main.highscorebeep = love.audio.newSource( "sounds/highscorebeep.ogg", "beep")
+   main.highscorebeep:setVolume(main.soundvolume)
+
 end
 
 function loadIngameSounds()
@@ -315,9 +347,6 @@ function loadIngameSounds()
 
    main.pausesound = love.audio.newSource( "sounds/pause.ogg", "pause")
    main.pausesound:setVolume(main.soundvolume)
-
-   main.highscorebeep = love.audio.newSource( "sounds/highscorebeep.ogg", "beep")
-   main.highscorebeep:setVolume(main.soundvolume)
 
    main.newlevel = love.audio.newSource( "sounds/newlevel.ogg", "newlevel")
    main.newlevel:setVolume( main.musicvolume)
@@ -1291,8 +1320,9 @@ function love.keypressed( key )
       end
       
    elseif main.gamestate == "failed" then
-      if controls.check("return", key) or controls.check("escape", key) then 
+      if controls.check("return", key) or controls.check("escape", key) then
          love.audio.pause(main.gameover2)
+         rocket.loadMain(main, love)
          rocket_load()
       end
    elseif main.gamestate == "highscoreentry" then
@@ -1311,6 +1341,46 @@ function love.keypressed( key )
          if highscorename[highscoreno]:len() > 0 then
             cursorblink = true
             highscorename[highscoreno] = string.sub(highscorename[highscoreno], 1, highscorename[highscoreno]:len()-1)
+         end
+      elseif key == "up" then
+         selectedchar = (selectedchar + 1) % 42;
+         if(selectedchar == 0) then selectedchar = 1 end
+         if highscorename[highscoreno]:len() < 6 then
+            cursorblink = true
+            if currentchar == 1 then
+               highscorename[highscoreno] = main.whitelist[selectedchar] .. string.sub(highscorename[highscoreno], currentchar+1, 5)
+            elseif currentchar == 5 then
+               highscorename[highscoreno] = string.sub(highscorename[highscoreno], 1, currentchar) .. main.whitelist[selectedchar]
+            else
+               highscorename[highscoreno] = string.sub(highscorename[highscoreno], 1, currentchar) .. main.whitelist[selectedchar] .. string.sub(highscorename[highscoreno], currentchar+1, 5)
+            end
+            -- love.audio.stop(highscorebeep)
+            love.audio.play(main.highscorebeep)
+         end
+      elseif key == "down" then
+         selectedchar = (selectedchar - 1) % 41;
+         if(selectedchar == 0) then selectedchar = 41 end
+         if highscorename[highscoreno]:len() < 6 then
+            cursorblink = true
+            if currentchar == 1 then
+               highscorename[highscoreno] = main.whitelist[selectedchar] .. string.sub(highscorename[highscoreno], currentchar+1, 5)
+            elseif currentchar == 5 then
+               highscorename[highscoreno] = string.sub(highscorename[highscoreno], 1, currentchar) .. main.whitelist[selectedchar]
+            else
+               highscorename[highscoreno] = string.sub(highscorename[highscoreno], 1, currentchar) .. main.whitelist[selectedchar] .. string.sub(highscorename[highscoreno], currentchar+1, 5)
+            end
+            -- love.audio.stop(highscorebeep)
+            love.audio.play(main.highscorebeep)
+         end
+      elseif key == "right" then
+         if currentchar < 6 then
+            currentchar = currentchar + 1;
+            love.audio.play(main.highscorebeep)
+         end
+      elseif key == "left" then
+         if currentchar > 1 then
+            currentchar = currentchar - 1;
+            love.audio.play(main.highscorebeep)
          end
       end
    elseif string.sub(main.gamestate, 1, 6) == "rocket" then
