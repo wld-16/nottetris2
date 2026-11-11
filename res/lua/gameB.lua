@@ -259,7 +259,7 @@ function gameB_draw()
 		--end
 
 	--DEBUG: draw Box2D shape outlines on top of the pieces
-	Physics.drawWorld(world.id, physicsscale)
+	-- Physics.drawWorld(world.id, physicsscale, love.graphics.getTranslation())
 	
 	love.graphics.setColor(255, 255, 255)
 	

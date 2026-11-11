@@ -376,7 +376,7 @@ int lua_drawWorld(lua_State *L)
 {
     int argc = lua_gettop(L);
 #ifndef SKIP_ERROR_HANDLING
-    if (argc != 2)
+    if (argc != 2 && argc != 4)
     {
         return luaL_error(L, "wrong number of arguments");
     }
@@ -387,14 +387,20 @@ int lua_drawWorld(lua_State *L)
 
     // Box2D coordinates are in meters (scaled down by PHYSICS_METER), while
     // the Lua-side physicsscale converts the game's internal pixel space to
-    // screen pixels. Multiply both to go from meters to screen pixels.
-    float draw_scale = scale * PHYSICS_METER;
+    // screen pixels. Multiply both to go from meters to screen pixels. The
+    // optional x/y arguments shift everything by the same centered game-area
+    // offset the wrapper applies to love.graphics draws, so debug shapes land
+    // on top of the pieces instead of in the screen's top-left corner.
+    vita2d_debug_draw_context draw_context;
+    draw_context.draw_scale = scale * PHYSICS_METER;
+    draw_context.offset_x = argc == 4 ? static_cast<float>(luaL_checknumber(L, 3)) : 0.0f;
+    draw_context.offset_y = argc == 4 ? static_cast<float>(luaL_checknumber(L, 4)) : 0.0f;
 
     b2DebugDraw debugDraw = b2DefaultDebugDraw();
     debugDraw.DrawPolygonFcn = vita2d_debug_draw::vita2dDrawPolygonFcn;
     debugDraw.DrawSolidPolygonFcn = vita2d_debug_draw::vita2dDrawSolidPolygonFcn;
     debugDraw.drawShapes = true;
-    debugDraw.context = &draw_scale;
+    debugDraw.context = &draw_context;
 
 
     b2World_Draw(b2_load_world_id, &debugDraw);

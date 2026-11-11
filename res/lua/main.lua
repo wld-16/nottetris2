@@ -493,47 +493,47 @@ function loadimages()
    love.graphics.setFont(main.tetrisfont)
    --
    ----filters!
-   --stabyourselflogo:setFilter("nearest", "nearest")
-   --logo:setFilter( "nearest", "nearest" )
-   --title:setFilter( "nearest", "nearest" )
-   --gametype:setFilter( "nearest", "nearest" )
-   --mpmenu:setFilter( "nearest", "nearest" )
-   --optionsmenu:setFilter( "nearest", "nearest" )
-   --volumeslider:setFilter( "nearest", "nearest" )
-   --gamebackground:setFilter( "nearest", "nearest" )
-   --gamebackgroundcutoff:setFilter( "nearest", "nearest" )
-   --gamebackgroundmulti:setFilter( "nearest", "nearest" )
-   --multiresults:setFilter( "nearest", "nearest" )
-   --number1:setFilter( "nearest", "nearest" )
-   --number2:setFilter( "nearest", "nearest" )
-   --number3:setFilter( "nearest", "nearest" )
-   --gameover:setFilter( "nearest", "nearest" )
-   --gameovercutoff:setFilter( "nearest", "nearest" )
-   --pausegraphic:setFilter( "nearest", "nearest" )
-   --pausegraphiccutoff:setFilter( "nearest", "nearest" )
-   --marioidle:setFilter( "nearest", "nearest" )
-   --mariojump:setFilter( "nearest", "nearest" )
-   --mariocry1:setFilter( "nearest", "nearest" )
-   --mariocry2:setFilter( "nearest", "nearest" )
-   --luigiidle:setFilter( "nearest", "nearest" )
-   --luigijump:setFilter( "nearest", "nearest" )
-   --luigicry1:setFilter( "nearest", "nearest" )
-   --luigicry2:setFilter( "nearest", "nearest" )
-   --rocket2:setFilter( "nearest", "nearest" )
-   --rocket3:setFilter( "nearest", "nearest" )
-   --spaceshuttle:setFilter( "nearest", "nearest" )
-   --rocketbackground:setFilter( "nearest", "nearest" )
-   --bigrocketbackground:setFilter( "nearest", "nearest" )
-   --bigrockettakeoffbackground:setFilter( "nearest", "nearest" )
-   --smoke1left:setFilter( "nearest", "nearest" )
-   --smoke1right:setFilter( "nearest", "nearest" )
-   --smoke2left:setFilter( "nearest", "nearest" )
-   --smoke2right:setFilter( "nearest", "nearest" )
-   --fire1:setFilter( "nearest", "nearest" )
-   --fire2:setFilter( "nearest", "nearest" )
-   --firebig1:setFilter( "nearest", "nearest" )
-   --firebig2:setFilter( "nearest", "nearest" )
-   --congratsline:setFilter( "nearest", "nearest" )
+   main.stabyourselflogo:setFilter("nearest", "nearest")
+   main.logo:setFilter( "nearest", "nearest" )
+   main.title:setFilter( "nearest", "nearest" )
+   main.gametype:setFilter( "nearest", "nearest" )
+   main.mpmenu:setFilter( "nearest", "nearest" )
+   main.optionsmenu:setFilter( "nearest", "nearest" )
+   main.volumeslider:setFilter( "nearest", "nearest" )
+   main.gamebackground:setFilter( "nearest", "nearest" )
+   main.gamebackgroundcutoff:setFilter( "nearest", "nearest" )
+   main.gamebackgroundmulti:setFilter( "nearest", "nearest" )
+   main.multiresults:setFilter( "nearest", "nearest" )
+   main.number1:setFilter( "nearest", "nearest" )
+   main.number2:setFilter( "nearest", "nearest" )
+   main.number3:setFilter( "nearest", "nearest" )
+   main.gameover:setFilter( "nearest", "nearest" )
+   main.gameovercutoff:setFilter( "nearest", "nearest" )
+   main.pausegraphic:setFilter( "nearest", "nearest" )
+   main.pausegraphiccutoff:setFilter( "nearest", "nearest" )
+   main.marioidle:setFilter( "nearest", "nearest" )
+   main.mariojump:setFilter( "nearest", "nearest" )
+   main.mariocry1:setFilter( "nearest", "nearest" )
+   main.mariocry2:setFilter( "nearest", "nearest" )
+   main.luigiidle:setFilter( "nearest", "nearest" )
+   main.luigijump:setFilter( "nearest", "nearest" )
+   main.luigicry1:setFilter( "nearest", "nearest" )
+   main.luigicry2:setFilter( "nearest", "nearest" )
+   main.rocket2:setFilter( "nearest", "nearest" )
+   main.rocket3:setFilter( "nearest", "nearest" )
+   main.spaceshuttle:setFilter( "nearest", "nearest" )
+   main.rocketbackground:setFilter( "nearest", "nearest" )
+   main.bigrocketbackground:setFilter( "nearest", "nearest" )
+   main.bigrockettakeoffbackground:setFilter( "nearest", "nearest" )
+   main.smoke1left:setFilter( "nearest", "nearest" )
+   main.smoke1right:setFilter( "nearest", "nearest" )
+   main.smoke2left:setFilter( "nearest", "nearest" )
+   main.smoke2right:setFilter( "nearest", "nearest" )
+   main.fire1:setFilter( "nearest", "nearest" )
+   main.fire2:setFilter( "nearest", "nearest" )
+   main.firebig1:setFilter( "nearest", "nearest" )
+   main.firebig2:setFilter( "nearest", "nearest" )
+   main.congratsline:setFilter( "nearest", "nearest" )
 end
 
 function love.update(dt)
@@ -1246,7 +1246,7 @@ function love.keypressed( key )
    elseif main.gamestate == "gameA" or main.gamestate == "gameB" or main.gamestate == "failingA" or main.gamestate == "failingB" then
 
       if controls.check("return", key) then
-         pause = not pause
+         main.pause = not main.pause
 
          if main.pause == true then
             if main.musicno < 4 then
@@ -1338,48 +1338,51 @@ function love.keypressed( key )
             love.audio.resume(main.music[main.musicno])
          end
       elseif key == "backspace" then
-         if highscorename[highscoreno]:len() > 0 then
+         local name = highscorename[highscoreno]
+         if name:len() > 0 then
             cursorblink = true
-            highscorename[highscoreno] = string.sub(highscorename[highscoreno], 1, highscorename[highscoreno]:len()-1)
+            -- cursor behind the last character: delete like a backspace,
+            -- otherwise remove the character at the cursor and close the gap
+            if currentchar > name:len() then
+               highscorename[highscoreno] = string.sub(name, 1, name:len()-1)
+            else
+               highscorename[highscoreno] = string.sub(name, 1, currentchar-1) .. string.sub(name, currentchar+1)
+            end
+            currentchar = math.min(currentchar, highscorename[highscoreno]:len() + 1)
+            love.audio.play(main.highscorebeep)
          end
       elseif key == "up" then
-         selectedchar = (selectedchar + 1) % 42;
-         if(selectedchar == 0) then selectedchar = 1 end
-         if highscorename[highscoreno]:len() < 6 then
-            cursorblink = true
-            if currentchar == 1 then
-               highscorename[highscoreno] = main.whitelist[selectedchar] .. string.sub(highscorename[highscoreno], currentchar+1, 5)
-            elseif currentchar == 5 then
-               highscorename[highscoreno] = string.sub(highscorename[highscoreno], 1, currentchar) .. main.whitelist[selectedchar]
-            else
-               highscorename[highscoreno] = string.sub(highscorename[highscoreno], 1, currentchar) .. main.whitelist[selectedchar] .. string.sub(highscorename[highscoreno], currentchar+1, 5)
-            end
-            -- love.audio.stop(highscorebeep)
-            love.audio.play(main.highscorebeep)
+         selectedchar = (selectedchar % #main.whitelist) + 1
+         cursorblink = true
+         -- cycle the character at the cursor, appending when the cursor
+         -- sits behind the last typed character
+         if currentchar > highscorename[highscoreno]:len() then
+            highscorename[highscoreno] = highscorename[highscoreno] .. main.whitelist[selectedchar]
+         else
+            local name = highscorename[highscoreno]
+            highscorename[highscoreno] = string.sub(name, 1, currentchar-1) .. main.whitelist[selectedchar] .. string.sub(name, currentchar+1)
          end
+         love.audio.play(main.highscorebeep)
       elseif key == "down" then
-         selectedchar = (selectedchar - 1) % 41;
-         if(selectedchar == 0) then selectedchar = 41 end
-         if highscorename[highscoreno]:len() < 6 then
-            cursorblink = true
-            if currentchar == 1 then
-               highscorename[highscoreno] = main.whitelist[selectedchar] .. string.sub(highscorename[highscoreno], currentchar+1, 5)
-            elseif currentchar == 5 then
-               highscorename[highscoreno] = string.sub(highscorename[highscoreno], 1, currentchar) .. main.whitelist[selectedchar]
-            else
-               highscorename[highscoreno] = string.sub(highscorename[highscoreno], 1, currentchar) .. main.whitelist[selectedchar] .. string.sub(highscorename[highscoreno], currentchar+1, 5)
-            end
-            -- love.audio.stop(highscorebeep)
-            love.audio.play(main.highscorebeep)
+         selectedchar = (selectedchar - 2) % #main.whitelist + 1
+         cursorblink = true
+         if currentchar > highscorename[highscoreno]:len() then
+            highscorename[highscoreno] = highscorename[highscoreno] .. main.whitelist[selectedchar]
+         else
+            local name = highscorename[highscoreno]
+            highscorename[highscoreno] = string.sub(name, 1, currentchar-1) .. main.whitelist[selectedchar] .. string.sub(name, currentchar+1)
          end
+         love.audio.play(main.highscorebeep)
       elseif key == "right" then
-         if currentchar < 6 then
-            currentchar = currentchar + 1;
+         -- the cursor never moves past the last character or the 6th slot
+         local maxchar = math.min(highscorename[highscoreno]:len() + 1, 6)
+         if currentchar < maxchar then
+            currentchar = currentchar + 1
             love.audio.play(main.highscorebeep)
          end
       elseif key == "left" then
          if currentchar > 1 then
-            currentchar = currentchar - 1;
+            currentchar = currentchar - 1
             love.audio.play(main.highscorebeep)
          end
       end

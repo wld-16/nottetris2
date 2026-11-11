@@ -287,14 +287,14 @@ function love.audio.newSource(filePath, name)
 end
 
 function love.graphics.newImageFromFile(filePath)
-    return loveImage:new({id = Graphics.loadImage(love.filesystem.assetPath(filePath)), filterWidth = "", filterHeight = ""})
+    return loveImage:new({id = Graphics.loadImage(love.filesystem.assetPath(filePath)), min = 0, mag = 0})
 end
 
 function love.graphics.newImageFromImageData(imageData)
     return loveImage:new({
         id = imageData.id,
-        filterWidth = "",
-        filterHeight = "",
+        min = 0,
+        mag = 0,
         pixelScale = imageData.pixelScale or 1
     })
 end
@@ -350,7 +350,10 @@ function love.graphics.print(text, x, y, r, scale_x, scale_y)
     local eff_scale_y = scale_y or eff_scale_x
     -- local stretch_x, stretch_y = love.graphics.getScreenScale()
     love.beginBlend()
-    Font.imageFontPrint(fontId, text, x, y, eff_scale_x, eff_scale_y)
+    Font.imageFontPrint(fontId, text,
+        x + love.coordinateSystemTranslation.x,
+        y + love.coordinateSystemTranslation.y,
+        eff_scale_x, eff_scale_y)
     love.endBlend()
 end
 
@@ -397,11 +400,43 @@ function love.graphics.translate(dx, dy)
 end
 
 -- LOVE hands each frame a fresh transform. translate() only ever adds, so
--- without this the fullscreen offset menu_draw applies every frame would keep
--- accumulating and walk the picture off the screen.
+-- without a reset the fullscreen offset menu_draw applies every frame would
+-- keep accumulating and walk the picture off the screen. The reset also seeds
+-- the transform with the centered game-area origin.
 function love.graphics.resetTransform()
-    love.coordinateSystemTranslation.x = 0
-    love.coordinateSystemTranslation.y = 0
+    local origin_x, origin_y = love.graphics.gameContentOrigin()
+    love.coordinateSystemTranslation.x = origin_x
+    love.coordinateSystemTranslation.y = origin_y
+end
+
+-- The Vita screen is 960x544 while the game draws its content in a
+-- GAME_WIDTH x GAME_HEIGHT logical area blown up by its own `scale` (3 on the
+-- Vita, i.e. 480x432). Without an offset everything renders in the top-left
+-- corner, so each frame starts with the game area centered on the screen:
+-- half the letterbox margins. Game files may still add their own translate()
+-- on top (additively), which is what the multiplayer screen does to position
+-- its wider 274*mpscale area -- so the multi game states opt out and start
+-- from the true screen origin instead.
+local MULTI_GAMESTATES = {
+    gameBmulti = true,
+    failingBmulti = true,
+    failedBmulti = true,
+    gameBmulti_results = true,
+}
+
+function love.graphics.gameContentOrigin()
+    if MULTI_GAMESTATES[gamestate] then
+        return 0, 0
+    end
+    local gameScale = scale or 1
+    return math.floor((SCREEN_WIDTH - GAME_WIDTH * gameScale) / 2),
+           math.floor((SCREEN_HEIGHT - GAME_HEIGHT * gameScale) / 2)
+end
+
+-- Current translation, e.g. to hand the centered origin to code that draws
+-- outside this wrapper (Physics.drawWorld's native debug draw).
+function love.graphics.getTranslation()
+    return love.coordinateSystemTranslation.x, love.coordinateSystemTranslation.y
 end
 
 function love.graphics.draw(drawable, x, y, angle, scale_x, scale_y, offset_x, offset_y)
@@ -577,7 +612,9 @@ function love.graphics.setColor(r, g, b)
 end
 
 function love.graphics.rectangle(mode, x, y, width, height, rx, ry, segments)
-    Graphics.fillRect(x,x + width, y, y + height, love.graphics.color)
+    local screen_x = x + love.coordinateSystemTranslation.x
+    local screen_y = y + love.coordinateSystemTranslation.y
+    Graphics.fillRect(screen_x, screen_x + width, screen_y, screen_y + height, love.graphics.color)
 end
 
 function love.printSystem()

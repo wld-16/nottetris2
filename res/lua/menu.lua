@@ -172,20 +172,10 @@ function menu_draw()
     end
 
     if main.gamestate == "highscoreentry" then
-        if highscorename[highscoreno]:len() < 6 then
-            offsetX = 0
-            for i = 1, highscorename[highscoreno]:len() do
-                offsetX = offsetX + 8*scale
-            end
-            if cursorblink == true then
-                love.graphics.print("_", 33*scale+offsetX, 110*scale+8*scale*(highscoreno-1), 0, scale)
-            else
-                love.graphics.print(" ", 33*scale+offsetX, 110*scale+8*scale*(highscoreno-1), 0, scale)
-            end
-        else
-            if cursorblink == true then
-                love.graphics.print("_", 33*scale+8*scale*5, 110*scale+8*scale*(highscoreno-1), 0, scale)
-            end
+        -- draw the cursor where main.lua actually edits: at the
+        -- currentchar slot, whether it holds a typed character or not
+        if cursorblink == true then
+            love.graphics.print("_", 33*scale+8*scale*(currentchar-1), 110*scale+8*scale*(highscoreno-1), 0, scale)
         end
     end
 

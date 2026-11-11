@@ -18,23 +18,25 @@ static unsigned int to_rgba8(b2HexColor color)
 // vita2d_draw_array does NOT set the front polygon mode, so passing
 // SCE_GXM_PRIMITIVE_LINES with the default TRIANGLE_FILL mode produces
 // nothing visible.
-// context points to a float (physicsscale) that converts Box2D world
-// coordinates to screen pixels.
+// context points to a vita2d_debug_draw_context holding the meters-to-screen
+// conversion scale and the centered game-area offset for the drawn geometry.
 static void drawPolygonOutline(const b2Vec2* worldVertices, int vertexCount, b2HexColor color, void* context)
 {
     if (vertexCount < 2)
         return;
 
-    float scale = 1.0f;
+    vita2d_debug_draw_context draw_context = { 1.0f, 0.0f, 0.0f };
     if (context)
-        scale = *static_cast<float*>(context);
+        draw_context = *static_cast<vita2d_debug_draw_context*>(context);
 
     unsigned int rgba = to_rgba8(color);
     for (int i = 0; i < vertexCount; i++)
     {
         int j = (i + 1) % vertexCount;
-        vita2d_draw_line(worldVertices[i].x * scale, worldVertices[i].y * scale,
-                        worldVertices[j].x * scale, worldVertices[j].y * scale, rgba);
+        vita2d_draw_line(worldVertices[i].x * draw_context.draw_scale + draw_context.offset_x,
+                         worldVertices[i].y * draw_context.draw_scale + draw_context.offset_y,
+                         worldVertices[j].x * draw_context.draw_scale + draw_context.offset_x,
+                         worldVertices[j].y * draw_context.draw_scale + draw_context.offset_y, rgba);
     }
 }
 

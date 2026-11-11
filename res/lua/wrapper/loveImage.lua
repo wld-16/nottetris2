@@ -8,27 +8,34 @@
 
 local loveImage = {
     id = 0,
-    filterHeigth = "",
-    filterWidth = ""
+    min = "",
+    mag = ""
 }
 
 function loveImage:new(o)
     o = o or {}
     setmetatable(o, self)
     self.__index = self
-    self.id = o.id or 0
-    self.filterHeigth = o.filterHeigth or 0
-    self.filterWidth = o.filterWidth or 0
+    o.id = o.id or 0
+    o.min = o.min or 0
+    o.mag = o.mag or 0
     return o
 end
 
-function loveImage:setFilter (filterWidth, filterHeigth)
-	self.filterWidth = filterWidth
-	self.filterHeigth = filterHeigth
+function loveImage:setFilter(min, mag)
+    local min_number = 0
+    local mag_number = 0
+    if(min == "nearest") then
+        min_number = 0
+    end
+    if(mag == "nearest") then
+        mag_number = 0
+    end
+	Graphics.setFilter(self.id, min_number, mag_number)
 end
 
 function loveImage:toString() 
-	return "id: " .. loveImage.id .. "\nfilterHeigth: " .. loveImage.filterHeigth .. "\nfilterWidth: " .. loveImage.filterWidth
+	return "id: " .. loveImage.id .. "\nmin: " .. loveImage.min .. "\nmag: " .. loveImage.mag
 end
 
 return loveImage

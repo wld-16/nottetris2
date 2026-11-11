@@ -98,6 +98,9 @@ function failed_checkhighscores()
 			highscorename[i] = ""
 			highscore[i] = scorescore
 			cursorblink = true
+			-- fresh entry: cursor to the first slot, first up-press selects "a"
+			selectedchar = 0
+			currentchar = 1
 			love.audio.play(main.highscoreintro)
 			highscoremusicstart = love.timer.getTime()
 			musicchanged = false

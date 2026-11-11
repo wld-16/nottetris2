@@ -49,6 +49,8 @@ local BUTTON_KEYS = {
     {SCE_CTRL_RIGHT,    "right"},
     {SCE_CTRL_START,    "return"},
     {SCE_CTRL_SELECT,   "escape"},
+    -- Cross deletes the character at the highscore entry cursor; START confirms
+    {SCE_CTRL_CROSS,    "backspace"},
     {SCE_CTRL_LTRIGGER, "y"},
     {SCE_CTRL_RTRIGGER, "x"}
 }
@@ -83,7 +85,7 @@ local function mainLoop()
         -- setBackgroundColor only recorded the colour until now; passing it here
         -- is what makes it the colour the frame actually starts from.
         Screen.clear(love.env.backgroundColor)
-        love.printSystem()
+
         love.draw()
         love.endBlend()
         Screen.flip()

@@ -652,6 +652,23 @@ static int lua_drawimg_rotatescale(lua_State *L)
     return 0;
 }
 
+static int lua_filters(lua_State *L) {
+    int argc = lua_gettop(L);
+#ifndef SKIP_ERROR_HANDLING
+    if (argc != 3)
+        return luaL_error(L, "wrong number of arguments");
+#endif
+    texture* text = (texture*)(luaL_checkinteger(L, 1));
+    SceGxmTextureFilter min_filter = (SceGxmTextureFilter)(luaL_checkinteger(L, 2));
+    SceGxmTextureFilter mag_filter = (SceGxmTextureFilter)(luaL_checkinteger(L, 3));
+#ifndef SKIP_ERROR_HANDLING
+    if (text->magic != 0xABADBEEF)
+        luaL_error(L, "attempt to access wrong memory block type.");
+#endif
+    vita2d_texture_set_filters(text->text, min_filter, mag_filter);
+    return 0;
+}
+
 
 
 //Register our Graphics Functions
@@ -669,6 +686,7 @@ const luaL_Reg Graphics_functions[] = {
     {"loadImage",           lua_loadimg},
     {"termBlend",           lua_term},
     {"fillRect",            lua_rect},
+    {"setFilter",          lua_filters},
     {0, 0}
 };
 

@@ -6,6 +6,17 @@
 #define NOTTETRIS2_VITA2D_DEBUG_DRAW_H
 #include <box2d/types.h>
 
+// Everything the debug-draw callbacks need to place world-space geometry on the
+// Vita screen: the Box2D meters-to-screen-pixels factor plus the screen offset
+// the game content is centered with (the letterbox margins around the game
+// area), set per drawWorld call from the Lua-side translation.
+struct vita2d_debug_draw_context
+{
+    float draw_scale;
+    float offset_x;
+    float offset_y;
+};
+
 
 class vita2d_debug_draw : public b2DebugDraw
 {
