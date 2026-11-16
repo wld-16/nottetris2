@@ -180,7 +180,82 @@ vita_create_vpk(${PROJECT_NAME}.vpk ${VITA_TITLEID} ${PROJECT_NAME}.self
         FILE res/lua/wrapper/lovePolygonShape.lua wrapper/lovePolygonShape.lua
         FILE res/lua/wrapper/loveRectangleShape.lua wrapper/loveRectangleShape.lua
         FILE res/lua/wrapper/loveFixture.lua wrapper/loveFixture.lua
-        #FILE res/sounds/themeA.ogg sounds/themeA.ogg
+        # Graphics: installed to app0:/graphics, read by the game via GAME_ROOT
+        FILE res/graphics/bigrocketbackground.png graphics/bigrocketbackground.png
+        FILE res/graphics/bigrockettakeoffbackground.png graphics/bigrockettakeoffbackground.png
+        FILE res/graphics/congratsline.png graphics/congratsline.png
+        FILE res/graphics/fire1.png graphics/fire1.png
+        FILE res/graphics/fire2.png graphics/fire2.png
+        FILE res/graphics/firebig1.png graphics/firebig1.png
+        FILE res/graphics/firebig2.png graphics/firebig2.png
+        FILE res/graphics/font.png graphics/font.png
+        FILE res/graphics/fontwhite.png graphics/fontwhite.png
+        FILE res/graphics/gamebackground.png graphics/gamebackground.png
+        FILE res/graphics/gamebackgroundgamea.png graphics/gamebackgroundgamea.png
+        FILE res/graphics/gamebackgroundmulti.png graphics/gamebackgroundmulti.png
+        FILE res/graphics/gameover.png graphics/gameover.png
+        FILE res/graphics/gameovercutoff.png graphics/gameovercutoff.png
+        FILE res/graphics/gametype.png graphics/gametype.png
+        FILE res/graphics/logo.png graphics/logo.png
+        FILE res/graphics/mpmenu.png graphics/mpmenu.png
+        FILE res/graphics/multiresults.png graphics/multiresults.png
+        FILE res/graphics/options.png graphics/options.png
+        FILE res/graphics/pause.png graphics/pause.png
+        FILE res/graphics/pausecutoff.png graphics/pausecutoff.png
+        FILE res/graphics/rainbow.png graphics/rainbow.png
+        FILE res/graphics/rocket1.png graphics/rocket1.png
+        FILE res/graphics/rocket2.png graphics/rocket2.png
+        FILE res/graphics/rocket3.png graphics/rocket3.png
+        FILE res/graphics/rocketbackground.png graphics/rocketbackground.png
+        FILE res/graphics/smoke1left.png graphics/smoke1left.png
+        FILE res/graphics/smoke1right.png graphics/smoke1right.png
+        FILE res/graphics/smoke2left.png graphics/smoke2left.png
+        FILE res/graphics/smoke2right.png graphics/smoke2right.png
+        FILE res/graphics/spaceshuttle.png graphics/spaceshuttle.png
+        FILE res/graphics/stabyourselflogo.png graphics/stabyourselflogo.png
+        FILE res/graphics/title.png graphics/title.png
+        FILE res/graphics/volumeslider.png graphics/volumeslider.png
+        FILE res/graphics/font/Masaaki-Regular.ttf graphics/font/Masaaki-Regular.ttf
+        FILE res/graphics/pieces/1.png graphics/pieces/1.png
+        FILE res/graphics/pieces/2.png graphics/pieces/2.png
+        FILE res/graphics/pieces/3.png graphics/pieces/3.png
+        FILE res/graphics/pieces/4.png graphics/pieces/4.png
+        FILE res/graphics/pieces/5.png graphics/pieces/5.png
+        FILE res/graphics/pieces/6.png graphics/pieces/6.png
+        FILE res/graphics/pieces/7.png graphics/pieces/7.png
+        FILE res/graphics/versus/luigicry1.png graphics/versus/luigicry1.png
+        FILE res/graphics/versus/luigicry2.png graphics/versus/luigicry2.png
+        FILE res/graphics/versus/luigiidle.png graphics/versus/luigiidle.png
+        FILE res/graphics/versus/luigijump.png graphics/versus/luigijump.png
+        FILE res/graphics/versus/mariocry1.png graphics/versus/mariocry1.png
+        FILE res/graphics/versus/mariocry2.png graphics/versus/mariocry2.png
+        FILE res/graphics/versus/marioidle.png graphics/versus/marioidle.png
+        FILE res/graphics/versus/mariojump.png graphics/versus/mariojump.png
+        FILE res/graphics/versus/number1.png graphics/versus/number1.png
+        FILE res/graphics/versus/number2.png graphics/versus/number2.png
+        FILE res/graphics/versus/number3.png graphics/versus/number3.png
+        # Sounds: installed to app0:/sounds
+        FILE res/sounds/4lineclear.ogg sounds/4lineclear.ogg
+        FILE res/sounds/blockfall.ogg sounds/blockfall.ogg
+        FILE res/sounds/boot.ogg sounds/boot.ogg
+        FILE res/sounds/gameover1.ogg sounds/gameover1.ogg
+        FILE res/sounds/gameover2.ogg sounds/gameover2.ogg
+        FILE res/sounds/highscorebeep.ogg sounds/highscorebeep.ogg
+        FILE res/sounds/highscoreintro.ogg sounds/highscoreintro.ogg
+        FILE res/sounds/highscoremusic.ogg sounds/highscoremusic.ogg
+        FILE res/sounds/lineclear.ogg sounds/lineclear.ogg
+        FILE res/sounds/move.ogg sounds/move.ogg
+        FILE res/sounds/musicoptions.ogg sounds/musicoptions.ogg
+        FILE res/sounds/newlevel.ogg sounds/newlevel.ogg
+        FILE res/sounds/pause.ogg sounds/pause.ogg
+        FILE res/sounds/resultsmusic.ogg sounds/resultsmusic.ogg
+        FILE res/sounds/rocket1to3.ogg sounds/rocket1to3.ogg
+        FILE res/sounds/rocket4.ogg sounds/rocket4.ogg
+        FILE res/sounds/themeA.ogg sounds/themeA.ogg
+        FILE res/sounds/themeB.ogg sounds/themeB.ogg
+        FILE res/sounds/themeC.ogg sounds/themeC.ogg
+        FILE res/sounds/titlemusic.ogg sounds/titlemusic.ogg
+        FILE res/sounds/turn.ogg sounds/turn.ogg
         FILE sce_sys/icon0.png sce_sys/icon0.png
         FILE sce_sys/livearea/contents/bg.png sce_sys/livearea/contents/bg.png
         FILE sce_sys/livearea/contents/startup.png sce_sys/livearea/contents/startup.png

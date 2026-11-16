@@ -17,10 +17,12 @@ local lovePolygonShape = require "lovePolygonShape"
 local loveRectangleShape = require "loveRectangleShape"
 local loveFixture = require "loveFixture"
 
--- Where the game's files live on the Vita
--- GAME_ROOT_APP = "app0:/"
+-- Where the game's read-only files live: the vpk contents, mounted as app0
+GAME_ROOT = "app0:/"
 
-GAME_ROOT = "ux0:/data/nottetris2/"
+-- Where save data lives. app0 is read-only once installed, so options and
+-- highscores have to stay on the writable data partition.
+SAVE_ROOT = "ux0:/data/nottetris2/"
 
 -- PSVita screen resolution
 SCREEN_WIDTH = 960
@@ -91,8 +93,8 @@ end
 -- Rough character metrics of the debug font, used to lay the error screen out.
 ERROR_LINE_HEIGHT = 200
 ERROR_CHARACTERS_PER_LINE = 100
-ERROR_LOG_PATH = "ux0:/data/nottetris2/" .. "error.log"
-TRACE_LOG_PATH = "ux0:/data/nottetris2/" .. "trace.log"
+ERROR_LOG_PATH = SAVE_ROOT .. "error.log"
+TRACE_LOG_PATH = SAVE_ROOT .. "trace.log"
 
 -- FCREATE is O_CREAT|O_WRONLY and does not truncate, so an old longer file would
 -- leave a garbage tail behind the new contents.
@@ -222,7 +224,7 @@ function love.graphics.getModes()
 end
 
 function love.filesystem.exists(filePath)
-    return System.doesFileExist(GAME_ROOT .. filePath)
+    return System.doesFileExist(SAVE_ROOT .. filePath)
 end
 
 -- Absolute Vita path for a game-relative asset. Fails loudly when the file is
@@ -237,7 +239,7 @@ function love.filesystem.assetPath(filePath)
 end
 
 function love.filesystem.read(filePath)
-    local handle = System.openFile(love.filesystem.assetPath(filePath), FREAD)
+    local handle = System.openFile(SAVE_ROOT .. filePath, FREAD)
     local sizeOfFile = System.sizeFile(handle)
     local content = System.readFile(handle, sizeOfFile)
     System.closeFile(handle)
@@ -248,10 +250,10 @@ end
 -- file first or a shorter save would keep the old tail behind the new contents.
 function love.filesystem.write(filePath, content)
     -- strip the trailing slash: sceIoMkdir wants the plain directory path
-    if not System.doesDirExist(GAME_ROOT) then
-        System.createDirectory(GAME_ROOT:sub(1, -2))
+    if not System.doesDirExist(SAVE_ROOT) then
+        System.createDirectory(SAVE_ROOT:sub(1, -2))
     end
-    local path = GAME_ROOT .. filePath
+    local path = SAVE_ROOT .. filePath
     pcall(System.deleteFile, path)
     local handle = System.openFile(path, FCREATE)
     System.writeFile(handle, content, #content)
