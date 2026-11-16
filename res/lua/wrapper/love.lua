@@ -236,19 +236,26 @@ function love.filesystem.assetPath(filePath)
     return absolutePath
 end
 
--- TODO: Figure out how big the read/ write length needs to be
 function love.filesystem.read(filePath)
     local handle = System.openFile(love.filesystem.assetPath(filePath), FREAD)
-    local sizeOfFile = 200
-    return System.readFile(handle, sizeOfFile)
+    local sizeOfFile = System.sizeFile(handle)
+    local content = System.readFile(handle, sizeOfFile)
+    System.closeFile(handle)
+    return content
 end
 
-
--- TODO: Figure out how big the read/ write
+-- FCREATE is O_CREAT|O_WRONLY and does not truncate, so delete any previous
+-- file first or a shorter save would keep the old tail behind the new contents.
 function love.filesystem.write(filePath, content)
-    --local handle = System.openFile("app0:/" .. filePath, FCREATE)
-    --local sizeOfFile = 200
-    --System.write(handle, content, sizeOfFile)
+    -- strip the trailing slash: sceIoMkdir wants the plain directory path
+    if not System.doesDirExist(GAME_ROOT) then
+        System.createDirectory(GAME_ROOT:sub(1, -2))
+    end
+    local path = GAME_ROOT .. filePath
+    pcall(System.deleteFile, path)
+    local handle = System.openFile(path, FCREATE)
+    System.writeFile(handle, content, #content)
+    System.closeFile(handle)
 end
 
 function love.graphics.setMode( width, height, fullscreen, vsync, fsaa)
